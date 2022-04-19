@@ -1,0 +1,3 @@
+# Ignore pipenv files
+Tests/Pipfile
+Tests/Pipfile.lock
