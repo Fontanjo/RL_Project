@@ -5,6 +5,7 @@ import numpy as np
 import math
 import pygame
 from pygame import gfxdraw
+import os
 
 # Objects
 EMPTY = 0
@@ -230,6 +231,19 @@ class SnakeEnv(gym.Env):
             if self.__screen is None:
                 pygame.init()
                 pygame.display.init()
+                # Set window title
+                pygame.display.set_caption('Snake')
+                # Set window icon
+                # Move working directory
+                try:
+                    abspath = os.path.abspath(__file__)
+                    dname = os.path.dirname(abspath)
+                    os.chdir(dname)
+                    Icon = pygame.image.load('../../data/snake.png')
+                    pygame.display.set_icon(Icon)
+                except Exception as e:
+                    # logging.error(traceback.format_exc())
+                    pass
                 self.__screen = pygame.display.set_mode((self.__screen_width, self.__screen_height))
                 # Compute the necessary measures
                 self.__compute_measures()
@@ -238,11 +252,13 @@ class SnakeEnv(gym.Env):
             # Create painting surface
             self.__surf = pygame.Surface((self.__screen_width, self.__screen_height))
             # Fill surface with white
-            self.__surf.fill((255, 255, 255))
+            self.__surf.fill(self.__bg_color)
             # Draw cells
             for y in range(len(self.__board)):
                 for x in range(len(self.__board[y])):
-                    gfxdraw.box(self.__surf, pygame.Rect(self.__tile_width * x, self.__tile_height * y, self.__tile_width, self.__tile_height), self.__colors[self.__board[self.__board_height - 1 - y,x]]) # pygame y coordinates uses 0 on top and grows toward bottom, therefore need to invert y
+                    x_coord = self.__tile_width * x + self.__margin_left
+                    y_coord = self.__tile_height * y + self.__margin_top
+                    gfxdraw.box(self.__surf, pygame.Rect(x_coord, y_coord, self.__tile_width, self.__tile_height), self.__colors[self.__board[self.__board_height - 1 - y,x]]) # pygame y coordinates uses 0 on top and grows toward bottom, therefore need to invert y
 
 
             # Render
@@ -254,14 +270,35 @@ class SnakeEnv(gym.Env):
 
 
     def __compute_measures(self):
+        # Use at least 10% of margin
+        self.__margin_left = int(self.__screen_width / 20)
+        self.__margin_top = int(self.__screen_height / 20)
         # Compute the size of each cell
-        self.__tile_width = int(self.__screen_width / self.__board_width)
-        self.__tile_height = int(self.__screen_height / self.__board_height)
+        max_size = int(min((self.__screen_width - self.__margin_left) / self.__board_width, (self.__screen_height - self.__margin_top) / self.__board_height))
+        # Correct margins
+        self.__margin_left = int((self.__screen_width - max_size * self.__board_width) / 2)
+        self.__margin_top = int((self.__screen_height - max_size * self.__board_height) / 2)
+        # Ensure the cells are squared
+        self.__tile_width = max_size
+        self.__tile_height = max_size
         # Colors for each type of cell (from 0 to 7)
-        self.__colors = [(255, 255, 255), (0, 0, 0), (255, 0, 0), (0, 255, 0), (200, 200, 0), (0, 128, 0), (0, 128, 0), (0, 128, 0), (0, 128, 0)]
+        empty_color = (255, 255, 255)
+        wall_color = (0, 0, 0)
+        target_color = (255, 0, 0)
+        body_color = (0, 255, 0)
+        digestion_color = (200, 200, 0)
+        head_up_color = (0, 128, 0)
+        head_right_color = (0, 128, 0)
+        head_down_color = (0, 128, 0)
+        head_left_color = (0, 128, 0)
+        self.__colors = [empty_color, wall_color, target_color, body_color, digestion_color, head_up_color, head_right_color, head_down_color, head_left_color]
+        # Colors for the background
+        self.__bg_color = (25, 250, 250)
 
 
 
 
     def close(self):
-        pygame.quit()
+        if self.__screen is not None:
+            pygame.display.quit()
+            pygame.quit()
