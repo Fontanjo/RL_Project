@@ -1,3 +1,6 @@
 # Ignore pipenv files
 Tests/Pipfile
 Tests/Pipfile.lock
+
+# Ignore jupyter checkpoints
+Tests/.ipynb_checkpoints/*

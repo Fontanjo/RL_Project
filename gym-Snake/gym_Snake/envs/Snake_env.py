@@ -4,15 +4,23 @@ from gym.utils import seeding
 import numpy as np
 import math
 
+# Objects
 EMPTY = 0
 WALL = 1
-BODY = 2
-HEAD = 3
-TARGET = 4
+TARGET = 2
+BODY = 3
+HEAD_UP = 4
+HEAD_RIGHT = 5
+HEAD_DOWN = 6
+HEAD_LEFT = 7
+
+# Directions
 UP = 0
 RIGHT = 1
 DOWN = 2
 LEFT = 3
+
+# Rewards
 COLLISION_REWARD = -10
 TARGET_REWARD = 1
 SURVIVED_REWARD = 0
@@ -26,12 +34,16 @@ class SnakeEnv(gym.Env):
         self.__board_width = width
         self.__board_height = height
         self.__board_solid_border = solid_border
+        # Ensure actions are valid
+        self.__possible_actions = [0, 1, 2]
         # Initialize variables
         self.reset()
 
 
     # Actions: 0 continue, 1 turn right, 2 turn left
     def step(self, action):
+        if action not in self.__possible_actions:
+            action = 0
         # Get new direction
         if action == 0:
             pass
@@ -55,7 +67,9 @@ class SnakeEnv(gym.Env):
         # Check if target
         if self.__board[new_h_pos] == TARGET:
             reward = TARGET_REWARD
-            self.__digestion.append(len(self.__snake_path))
+            self.__digestion.append(len(self.__snake_path) + len(self.__digestion) + 1) # Digest when the last part of the tail reaches the target position
+            # Place a new target
+            self.__place_target()
         else:
             reward = SURVIVED_REWARD
         # Move
@@ -121,7 +135,8 @@ class SnakeEnv(gym.Env):
         # Store direction -> 0 for UP, 1 for RIGHT, 2 for DOWN, 3 for LEFT
         self.__direction = LEFT
         # Create snake (only 1 tile on the right of the head)
-        self.__snake_path = [RIGHT, RIGHT, UP, RIGHT, DOWN, DOWN, DOWN, LEFT]
+        # self.__snake_path = [RIGHT, RIGHT, UP, RIGHT, DOWN, DOWN, DOWN, LEFT]
+        self.__snake_path = [RIGHT]
 
 
     # Remove the snake from the board (before re-placing it)
@@ -134,8 +149,8 @@ class SnakeEnv(gym.Env):
 
     # Place the snake on the board, based on the snake_path
     def __place_snake(self):
-        # Place the head
-        self.__board[self.__head_pos[0], self.__head_pos[1]] = HEAD
+        # Place the head (and show the direction)
+        self.__board[self.__head_pos[0], self.__head_pos[1]] = HEAD_UP + self.__direction
         # Store coordinates
         temp_h, temp_w = self.__head_pos
         # Add body
@@ -167,14 +182,14 @@ class SnakeEnv(gym.Env):
         if direction == LEFT:
             self.__head_pos = (old_h, old_w - 1)
         # Move body
-        # Insert a body tile behing the head
+        # Insert a body tile behind the head
         self.__snake_path.insert(0, (direction + 2) % 4)
         # If necessary, remove last part
         if 0 not in self.__digestion:
             self.__snake_path.pop()
         # Else, finish digestion
         else:
-            self.digestion.remove(0)
+            self.__digestion.remove(0)
 
 
     # Place the target
@@ -190,3 +205,4 @@ class SnakeEnv(gym.Env):
 
     def render(self, mode='human', close=False):
         print(self.__board)
+        # print(self.__digestion)
