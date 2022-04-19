@@ -3,16 +3,19 @@ from gym import error, spaces, utils
 from gym.utils import seeding
 import numpy as np
 import math
+import pygame
+from pygame import gfxdraw
 
 # Objects
 EMPTY = 0
 WALL = 1
 TARGET = 2
 BODY = 3
-HEAD_UP = 4
-HEAD_RIGHT = 5
-HEAD_DOWN = 6
-HEAD_LEFT = 7
+DIGESTION = 4
+HEAD_UP = 5
+HEAD_RIGHT = 6
+HEAD_DOWN = 7
+HEAD_LEFT = 8
 
 # Directions
 UP = 0
@@ -26,7 +29,7 @@ TARGET_REWARD = 1
 SURVIVED_REWARD = 0
 
 class SnakeEnv(gym.Env):
-    metadata = {'render.modes': ['human']}
+    metadata = {'render.modes': ['human', 'print'], "render_fps": 50}
 
 
     def __init__(self, width=10, height=10, solid_border=True):
@@ -103,12 +106,20 @@ class SnakeEnv(gym.Env):
         self.__place_snake()
         # Place the first target
         self.__place_target()
+        # Screen for render
+        self.__screen = None
+        # Clock for render
+        self.__clock = None
+        # Screen width
+        self.__screen_width = 600
+        # Screen height
+        self.__screen_height = 400
 
 
     # Generate the board on which the snake moves
     def __generate_board(self):
         # Generate empty matrix
-        b = np.zeros((self.__board_height, self.__board_width))
+        b = np.zeros((self.__board_height, self.__board_width), dtype=int)
         # If necessary, create the border
         if self.__board_solid_border:
             # Create walls on the first row
@@ -153,6 +164,8 @@ class SnakeEnv(gym.Env):
         self.__board[self.__head_pos[0], self.__head_pos[1]] = HEAD_UP + self.__direction
         # Store coordinates
         temp_h, temp_w = self.__head_pos
+        # Keep track of digestion
+        d = len(self.__snake_path)
         # Add body
         for direction in self.__snake_path:
             if direction == UP:
@@ -164,7 +177,11 @@ class SnakeEnv(gym.Env):
             if direction == LEFT:
                 temp_w -= 1
             # Add body
-            self.__board[temp_h, temp_w] = BODY
+            if d in self.__digestion:
+                self.__board[temp_h, temp_w] = DIGESTION
+            else:
+                self.__board[temp_h, temp_w] = BODY
+            d -= 1
 
 
     # TODO verify digestion
@@ -203,6 +220,48 @@ class SnakeEnv(gym.Env):
             self.__board[possible[0][pos], possible[1][pos]] = TARGET
 
 
+    # TODO add comments on what each line does (for pygame code)
     def render(self, mode='human', close=False):
-        print(self.__board)
-        # print(self.__digestion)
+        if mode == 'print':
+            print(self.__board)
+            # print(self.__digestion)
+        elif mode == 'human':
+            # If necessary, init window
+            if self.__screen is None:
+                pygame.init()
+                pygame.display.init()
+                self.__screen = pygame.display.set_mode((self.__screen_width, self.__screen_height))
+                # Compute the necessary measures
+                self.__compute_measures()
+            if self.__clock is None:
+                self.__clock = pygame.time.Clock()
+            # Create painting surface
+            self.__surf = pygame.Surface((self.__screen_width, self.__screen_height))
+            # Fill surface with white
+            self.__surf.fill((255, 255, 255))
+            # Draw cells
+            for y in range(len(self.__board)):
+                for x in range(len(self.__board[y])):
+                    gfxdraw.box(self.__surf, pygame.Rect(self.__tile_width * x, self.__tile_height * y, self.__tile_width, self.__tile_height), self.__colors[self.__board[self.__board_height - 1 - y,x]]) # pygame y coordinates uses 0 on top and grows toward bottom, therefore need to invert y
+
+
+            # Render
+            self.__surf = pygame.transform.flip(self.__surf, False, True)
+            self.__screen.blit(self.__surf, (0, 0))
+            pygame.event.pump()
+            self.__clock.tick(self.metadata["render_fps"])
+            pygame.display.flip()
+
+
+    def __compute_measures(self):
+        # Compute the size of each cell
+        self.__tile_width = int(self.__screen_width / self.__board_width)
+        self.__tile_height = int(self.__screen_height / self.__board_height)
+        # Colors for each type of cell (from 0 to 7)
+        self.__colors = [(255, 255, 255), (0, 0, 0), (255, 0, 0), (0, 255, 0), (200, 200, 0), (0, 128, 0), (0, 128, 0), (0, 128, 0), (0, 128, 0)]
+
+
+
+
+    def close(self):
+        pygame.quit()
