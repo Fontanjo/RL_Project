@@ -1,0 +1,11 @@
+README.md
+pyproject.toml
+setup.py
+gym_Snake/__init__.py
+gym_Snake.egg-info/PKG-INFO
+gym_Snake.egg-info/SOURCES.txt
+gym_Snake.egg-info/dependency_links.txt
+gym_Snake.egg-info/requires.txt
+gym_Snake.egg-info/top_level.txt
+gym_Snake/envs/Snake_env.py
+gym_Snake/envs/__init__.py
