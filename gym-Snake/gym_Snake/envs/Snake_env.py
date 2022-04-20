@@ -36,7 +36,7 @@ class SnakeEnv(gym.Env):
     metadata = {'render.modes': ['human', 'print'], "render_fps": 50}
 
 
-    def __init__(self, width=10, height=10, solid_border=True):
+    def __init__(self, width=10, height=10, solid_border=True, mode='computer'):
         # Store informations
         self.__board_width = width
         self.__board_height = height
@@ -44,7 +44,8 @@ class SnakeEnv(gym.Env):
         # Ensure actions are valid
         self.__possible_actions = [0, 1, 2]
         # Initialize variables
-        self.reset()
+        self.reset(mode=mode)
+
 
 
     # Actions: 0 continue, 1 turn right, 2 turn left
@@ -90,7 +91,7 @@ class SnakeEnv(gym.Env):
         return self.__board.copy(), reward, False, {}
 
 
-    def reset(self, width=None, height=None, solid_border=None):
+    def reset(self, width=None, height=None, solid_border=None, mode='computer'):
         # Possibly change environment
         if width is not None: self.__board_width = width
         if height is not None: self.__board_height = height
@@ -118,6 +119,10 @@ class SnakeEnv(gym.Env):
         self.__screen_width = 600
         # Screen height
         self.__screen_height = 400
+        # Check game mode
+        self.__play_mode = mode
+        if mode == 'human':
+            self.__play_human()
 
 
     # Generate the board on which the snake moves
@@ -252,8 +257,9 @@ class SnakeEnv(gym.Env):
                 self.__compute_measures()
                 # Check if the close button in pressed
                 # th = threading.Thread(target=__check_closing, args=(self))
-                th = threading.Thread(target=self.__check_closing, args=[pygame])
-                th.start()
+                if self.__play_mode != 'human':
+                    th = threading.Thread(target=self.__check_closing, args=[pygame])
+                    th.start()
             if self.__clock is None:
                 self.__clock = pygame.time.Clock()
             # Create painting surface
@@ -280,15 +286,15 @@ class SnakeEnv(gym.Env):
     def __check_closing(self, pg):
         # time.sleep(2)
         # pg.init()
-        running = True
-        while running:
+        self.__running = True
+        while self.__running:
             pg.init()
             for event in pg.event.get():
                 if event.type == QUIT:
                     self.close()
                     self.__screen = None
                     self.__clock = None
-                    running = False
+                    self.__running = False
 
 
     # Compute useful variables for the graphics
@@ -319,9 +325,101 @@ class SnakeEnv(gym.Env):
         self.__bg_color = (25, 250, 250)
 
 
-
-
     def close(self):
         if self.__screen is not None:
             pygame.display.quit()
             pygame.quit()
+
+
+    # Play in human mode. Useful to debug
+    def __play_human(self):
+        self.__running = True
+        done = False
+
+        # Time to do a move
+        self.__timeout = 1000 # In ms
+
+        while self.__running and not done:
+            # Render
+            # Sometime error when closing
+            try:
+                self.render()
+            except Exception as e:
+                pass
+
+
+            # Limit time
+            current_time = pygame.time.get_ticks()
+            next_step = current_time + int(self.__timeout)
+
+            # Default move
+            next_move = 0
+
+            # Check input
+            while current_time < next_step and self.__running:
+                # pygame.init()
+                current_time = pygame.time.get_ticks()
+                for event in pygame.event.get():
+                    # If a key is pressed
+                    if event.type == QUIT:
+                        self.__running = False
+                    if event.type == KEYDOWN:
+                        # Action depends on current direction as well
+                        if self.__direction == UP:
+                            # if event.key == ord("w") or event.key == pygame.K_UP:
+                            #     print("You pressed w or key up")
+                            if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                                # print("You pressed d or key right")
+                                next_move = RIGHT
+                            # elif event.key == ord( "s" ) or event.key == pygame.K_DOWN:
+                            #     print("You pressed s or key down")
+                            elif event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                                # print("You pressed a or key left")
+                                next_move = 2
+                        elif self.__direction == RIGHT:
+                            if event.key == pygame.K_w or event.key == pygame.K_UP:
+                                # print("You pressed w or key up")
+                                next_move = 2
+                            # elif event.key == ord( "d" ) or event.key == pygame.K_RIGHT:
+                            #     print("You pressed d or key right")
+                            elif event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                                # print("You pressed s or key down")
+                                next_move = 1
+                            # elif event.key == ord( "a" ) or event.key == pygame.K_LEFT:
+                            #     print("You pressed a or key left")
+                        elif self.__direction == DOWN:
+                            # if event.key == ord("w") or event.key == pygame.K_UP:
+                            #     print("You pressed w or key up")
+                            if event.key == pygame.K_d or event.key == pygame.K_RIGHT:
+                                next_move = 2
+                            #     print("You pressed d or key right")
+                            # elif event.key == ord( "s" ) or event.key == pygame.K_DOWN:
+                            #     print("You pressed s or key down")
+                            elif event.key == pygame.K_a or event.key == pygame.K_LEFT:
+                                next_move = 1
+                                # print("You pressed a or key left")
+                        elif self.__direction == LEFT:
+                            if event.key == pygame.K_w or event.key == pygame.K_UP:
+                                # print("You pressed w or key up")
+                                next_move = 1
+                            # elif event.key == ord( "d" ) or event.key == pygame.K_RIGHT:
+                            #     print("You pressed d or key right")
+                            elif event.key == pygame.K_s or event.key == pygame.K_DOWN:
+                            #     print("You pressed s or key down")
+                            # elif event.key == ord( "a" ) or event.key == pygame.K_LEFT:
+                            #     print("You pressed a or key left")
+                                next_move = 2
+
+            # Move
+            _, reward, done, _ = self.step(next_move)
+
+            # Reduce timeout
+            if reward == TARGET_REWARD:
+                self.__timeout *= 0.95
+
+            # Reset default move
+            next_move = 0
+
+        self.close()
+        self.__screen = None
+        self.__clock = None
