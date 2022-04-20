@@ -32,6 +32,10 @@ COLLISION_REWARD = -10
 TARGET_REWARD = 1
 SURVIVED_REWARD = 0
 
+# Human mode
+INITIAL_TIMEOUT = 1000 # In ms
+TIMEOUT_DECREASE = 0.95
+
 class SnakeEnv(gym.Env):
     metadata = {'render.modes': ['human', 'print'], "render_fps": 50}
 
@@ -337,7 +341,7 @@ class SnakeEnv(gym.Env):
         done = False
 
         # Time to do a move
-        self.__timeout = 1000 # In ms
+        self.__timeout = INITIAL_TIMEOUT
 
         while self.__running and not done:
             # Render
@@ -415,11 +419,12 @@ class SnakeEnv(gym.Env):
 
             # Reduce timeout
             if reward == TARGET_REWARD:
-                self.__timeout *= 0.95
+                self.__timeout *= TIMEOUT_DECREASE
 
             # Reset default move
             next_move = 0
 
+        # Close env
         self.close()
         self.__screen = None
         self.__clock = None
