@@ -5,7 +5,10 @@ import numpy as np
 import math
 import pygame
 from pygame import gfxdraw
+from pygame.locals import *
 import os
+import threading
+import time
 
 # Objects
 EMPTY = 0
@@ -242,11 +245,15 @@ class SnakeEnv(gym.Env):
                     Icon = pygame.image.load('../../data/snake.png')
                     pygame.display.set_icon(Icon)
                 except Exception as e:
-                    # logging.error(traceback.format_exc())
                     pass
+                # Set screen size
                 self.__screen = pygame.display.set_mode((self.__screen_width, self.__screen_height))
                 # Compute the necessary measures
                 self.__compute_measures()
+                # Check if the close button in pressed
+                # th = threading.Thread(target=__check_closing, args=(self))
+                th = threading.Thread(target=self.__check_closing, args=[pygame])
+                th.start()
             if self.__clock is None:
                 self.__clock = pygame.time.Clock()
             # Create painting surface
@@ -258,17 +265,33 @@ class SnakeEnv(gym.Env):
                 for x in range(len(self.__board[y])):
                     x_coord = self.__tile_width * x + self.__margin_left
                     y_coord = self.__tile_height * y + self.__margin_top
-                    gfxdraw.box(self.__surf, pygame.Rect(x_coord, y_coord, self.__tile_width, self.__tile_height), self.__colors[self.__board[self.__board_height - 1 - y,x]]) # pygame y coordinates uses 0 on top and grows toward bottom, therefore need to invert y
-
+                    color = self.__colors[self.__board[self.__board_height - 1 - y,x]]
+                    # Draw
+                    gfxdraw.box(self.__surf, pygame.Rect(x_coord, y_coord, self.__tile_width, self.__tile_height), color) # pygame y coordinates uses 0 on top and grows toward bottom, therefore need to invert y
 
             # Render
             self.__surf = pygame.transform.flip(self.__surf, False, True)
             self.__screen.blit(self.__surf, (0, 0))
-            pygame.event.pump()
+            # pygame.event.pump()
             self.__clock.tick(self.metadata["render_fps"])
             pygame.display.flip()
 
 
+    def __check_closing(self, pg):
+        # time.sleep(2)
+        # pg.init()
+        running = True
+        while running:
+            pg.init()
+            for event in pg.event.get():
+                if event.type == QUIT:
+                    self.close()
+                    self.__screen = None
+                    self.__clock = None
+                    running = False
+
+
+    # Compute useful variables for the graphics
     def __compute_measures(self):
         # Use at least 10% of margin
         self.__margin_left = int(self.__screen_width / 20)
