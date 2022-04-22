@@ -162,16 +162,17 @@ class SnakeEnv(gym.Env):
             b[:,0] = WALL
             # Create walls on the last column
             b[:, self.__board_width -1 ] = WALL
-        if self.__board_type == 'Shuriken':
-            pass
-        elif self.__board_type == 'Double':
-            pass
-        elif self.__board_type == 'Maze':
-            pass
         # Set as board
         self.__board = b
         # Keep shape of empty board
         self.__board_base = b.copy()
+        # If necessary, add new walls
+        if self.__board_type == 'Shuriken':
+            self.__generate_shuriken_board()
+        elif self.__board_type == 'Double':
+            pass
+        elif self.__board_type == 'Maze':
+            pass
 
 
     # Generate custom board
@@ -182,13 +183,47 @@ class SnakeEnv(gym.Env):
         # Cast to numpy array
         b = np.array(custom_board)
         # Ensure it is 2D
-        assert len(b.shape) == 2
+        assert len(b.shape) == 2, 'The board should be a 2D matrix'
         # Get height
         self.__board_height = b.shape[0]
         # Get width
         self.__board_width = b.shape[1]
         # Save board
         self.__board = b.copy()
+
+
+    # Generate shuriken board
+    def __generate_shuriken_board(self):
+        # Make sure the minimal dimension are respected
+        if self.__board_solid_border:
+            assert self.__board_width >= 8 and self.__board_height >= 8, 'For Shuriken shape with solid border, the board should be at least 8x8'
+        else:
+            assert self.__board_width >= 6 and self.__board_height >= 6, 'For Shuriken shape (without solid border), the board should be at least 6x6'
+        # Add walls
+        # Number of upper and lower walls. Remove at least 4 for center. First one overrider border if present
+        vertical_nb = int((self.__board_height - 6) / 2) + 1
+        # Upper wall index
+        up_w_index = int(self.__board_width / 2)
+        # Add upper walls
+        for h in range(vertical_nb):
+            self.__board[h, up_w_index] = WALL
+        # Lower wall index
+        down_w_index = int((self.__board_width + 1) / 2) - 1
+        # Add lower walls
+        for h in range(vertical_nb):
+            self.__board[self.__board_height - 1 - h, down_w_index] = WALL
+        # Number of right and left walls. Remove 2 for borders, and at least 4 for center
+        horizontal_nb = int((self.__board_width - 6) / 2) + 1
+        # Left wall index
+        left_h_index = int((self.__board_height + 1) / 2) - 1
+        # Add left walls
+        for w in range(horizontal_nb):
+            self.__board[left_h_index, w] = WALL
+        # Right wall index
+        right_h_index = int(self.__board_height / 2)
+        # Add right walls
+        for w in range(horizontal_nb):
+            self.__board[right_h_index, self.__board_width - 1 - w] = WALL
 
 
     # Generate the snake on the board
