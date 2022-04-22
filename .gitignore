@@ -4,3 +4,6 @@ Tests/Pipfile.lock
 
 # Ignore jupyter checkpoints
 Tests/.ipynb_checkpoints/*
+*/.ipynb_checkpoints/
+.ipynb_checkpoints
+

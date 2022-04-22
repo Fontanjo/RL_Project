@@ -40,11 +40,18 @@ class SnakeEnv(gym.Env):
     metadata = {'render.modes': ['human', 'print'], "render_fps": 50}
 
 
-    def __init__(self, width=10, height=10, solid_border=True, mode='computer'):
+    def __init__(self, width=10, height=10, solid_border=True, shape='Normal', custom_board=None, mode='computer'):
         # Store informations
-        self.__board_width = width
-        self.__board_height = height
-        self.__board_solid_border = solid_border
+        if custom_board != None:
+            # Remember that there is a customized board
+            self.__board_type = 'Custom'
+            # Initialize custom board
+            self.__generate_custom_board(custom_board)
+        else:
+            self.__board_width = width
+            self.__board_height = height
+            self.__board_solid_border = solid_border
+            self.__board_type = 'shape'
         # Ensure actions are valid
         self.__possible_actions = [0, 1, 2]
         # Initialize variables
@@ -95,11 +102,25 @@ class SnakeEnv(gym.Env):
         return self.__board.copy(), reward, False, {}
 
 
-    def reset(self, width=None, height=None, solid_border=None, mode='computer'):
-        # Possibly change environment
-        if width is not None: self.__board_width = width
-        if height is not None: self.__board_height = height
-        if solid_border is not None: self.__board_solid_border = solid_border
+    def reset(self, width=None, height=None, solid_border=None, shape=None, custom_board=None, mode='computer'):
+        # If a new custom board is added, or if there was one before and no new shape has been specified
+        if custom_board != None or (shape == None and self.__board_type == 'Custom'):
+            # Remember that there is a customized board
+            self.__board_type = 'Custom'
+            # Get new board, or old one if new one not specified
+            b = custom_board
+            if b == None:
+                b = self.__board_base
+            # Initialize custom board
+            self.__generate_custom_board(custom_board)
+        else:
+            # Possibly change environment
+            if width is not None: self.__board_width = width
+            if height is not None: self.__board_height = height
+            if solid_border is not None: self.__board_solid_border = solid_border
+            if shape is not None: self.__board_type = shape
+            # Generate the board
+            self.__generate_board()
         # Define action space
         # 3 possible actions: continue in the same direction, turn right, turn left
         self.action_space = spaces.Discrete(3)
@@ -107,8 +128,6 @@ class SnakeEnv(gym.Env):
         self.observation_space = spaces.Discrete(self.__board_width * self.__board_height)
         # Keep track of targets to digest
         self.__digestion = []
-        # Generate the board
-        self.__generate_board()
         # Generate the snake
         self.__generate_snake()
         # Place the snake on the board
@@ -143,12 +162,37 @@ class SnakeEnv(gym.Env):
             b[:,0] = WALL
             # Create walls on the last column
             b[:, self.__board_width -1 ] = WALL
+        if self.__board_type == 'Shuriken':
+            pass
+        elif self.__board_type == 'Double':
+            pass
+        elif self.__board_type == 'Maze':
+            pass
         # Set as board
         self.__board = b
+        # Keep shape of empty board
+        self.__board_base = b.copy()
+
+
+    # Generate custom board
+    # TODO: ensure there are only 1s and 0s (or handle the case where the snake and/or the target are already given)
+    def __generate_custom_board(self, custom_board):
+        # Keep shape of empty board (for reset)
+        self.__board_base = custom_board.copy()
+        # Cast to numpy array
+        b = np.array(custom_board)
+        # Ensure it is 2D
+        assert len(b.shape) == 2
+        # Get height
+        self.__board_height = b.shape[0]
+        # Get width
+        self.__board_width = b.shape[1]
+        # Save board
+        self.__board = b.copy()
 
 
     # Generate the snake on the board
-    # Make sure the tile in front of the snake is free
+    # TODO: make sure the tile in front of the snake is free
     # TODO: make more stable (to different envs shape)
     def __generate_snake(self):
         # Get coordinates of the central tiles
