@@ -6,7 +6,7 @@ README file for Snake gym environment!
 # TODO
 
 - [ ] Add new shapes
-  - [ ] Shuriken
+  - [x] Shuriken
   - [ ] Double
   - [x] Custom
   - [ ] Maze

@@ -73,13 +73,13 @@ class SnakeEnv(gym.Env):
         # Get new head position
         old_h, old_w = self.__head_pos
         if self.__direction == UP:
-            new_h_pos = (old_h - 1, old_w)
+            new_h_pos = ((old_h + self.__board_height - 1) % self.__board_height, old_w)
         if self.__direction == RIGHT:
-            new_h_pos = (old_h, old_w + 1)
+            new_h_pos = (old_h, (old_w + 1) % self.__board_width)
         if self.__direction == DOWN:
-            new_h_pos = (old_h + 1, old_w)
+            new_h_pos = ((old_h + 1) % self.__board_height, old_w)
         if self.__direction == LEFT:
-            new_h_pos = (old_h, old_w - 1)
+            new_h_pos = (old_h, (old_w + self.__board_width - 1) % self.__board_width)
         # Check if collision
         if self.__board[new_h_pos] == WALL or self.__board[new_h_pos] == BODY:
             return self.__board.copy(), COLLISION_REWARD, True, {}
@@ -262,12 +262,15 @@ class SnakeEnv(gym.Env):
         for direction in self.__snake_path:
             if direction == UP:
                 temp_h -= 1
-            if direction == RIGHT:
+            elif direction == RIGHT:
                 temp_w += 1
-            if direction == DOWN:
+            elif direction == DOWN:
                 temp_h += 1
-            if direction == LEFT:
+            elif direction == LEFT:
                 temp_w -= 1
+            # Pacman effect
+            temp_w = (temp_w + self.__board_width) % self.__board_width
+            temp_h = (temp_h + self.__board_height) % self.__board_height
             # Add body
             if d in self.__digestion:
                 self.__board[temp_h, temp_w] = DIGESTION
@@ -276,20 +279,19 @@ class SnakeEnv(gym.Env):
             d -= 1
 
 
-    # TODO verify digestion
     # Move the snake by 1 tile
     def __move_snake(self, direction, eating=False):
         # Save position of the head
         old_h, old_w = self.__head_pos
         # Move the head
         if direction == UP:
-            self.__head_pos = (old_h - 1, old_w)
+            self.__head_pos = ((old_h + self.__board_height - 1) % self.__board_height, old_w)
         if direction == RIGHT:
-            self.__head_pos = (old_h, old_w + 1)
+            self.__head_pos = (old_h, (old_w + 1) % self.__board_width)
         if direction == DOWN:
-            self.__head_pos = (old_h + 1, old_w)
+            self.__head_pos = ((old_h + 1) % self.__board_height, old_w)
         if direction == LEFT:
-            self.__head_pos = (old_h, old_w - 1)
+            self.__head_pos = (old_h, (old_w + self.__board_width - 1) % self.__board_width)
         # Move body
         # Insert a body tile behind the head
         self.__snake_path.insert(0, (direction + 2) % 4)
