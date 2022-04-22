@@ -164,15 +164,17 @@ class SnakeEnv(gym.Env):
             b[:, self.__board_width -1 ] = WALL
         # Set as board
         self.__board = b
-        # Keep shape of empty board
-        self.__board_base = b.copy()
         # If necessary, add new walls
         if self.__board_type == 'Shuriken':
             self.__generate_shuriken_board()
-        elif self.__board_type == 'Double':
-            pass
+        elif self.__board_type == 'Double_h':
+            self.__generate_double_h_board()
+        elif self.__board_type == 'Double_v':
+            self.__generate_double_v_board()
         elif self.__board_type == 'Maze':
-            pass
+            print('Maze board not yet implemented')
+        # Keep shape of empty board
+        self.__board_base = self.__board.copy()
 
 
     # Generate custom board
@@ -226,6 +228,44 @@ class SnakeEnv(gym.Env):
             self.__board[right_h_index, self.__board_width - 1 - w] = WALL
 
 
+    # Generate double board (horizontal separation)
+    # TODO add check for minimal size
+    def __generate_double_h_board(self):
+        # Upper wall index
+        left_h_index = int(self.__board_height / 2)
+        # Number of upper walls. Remove at least 1 for center. First one overrider border if present
+        left_nb = int((self.__board_width - 1) / 2)
+        # Add upper walls
+        for w in range(left_nb):
+            self.__board[left_h_index, w] = WALL
+        # Lower wall index
+        right_w_index = int((self.__board_height + 1) / 2) - 1
+        # Number of lower walls. Remove at least 1 for center. First one overrider border if present
+        right_nb = int((self.__board_width - 1) / 2) + 1
+        # Add lower walls
+        for w in range(right_nb):
+            self.__board[right_w_index, self.__board_width - 1 - w] = WALL
+
+
+    # Generate double board (vertical separation)
+    # TODO add check for minimal size
+    def __generate_double_v_board(self):
+        # Upper wall index
+        up_w_index = int(self.__board_width / 2)
+        # Number of upper walls. Remove at least 1 for center. First one overrider border if present
+        up_nb = int((self.__board_height - 1) / 2)
+        # Add upper walls
+        for h in range(up_nb):
+            self.__board[h, up_w_index] = WALL
+        # Lower wall index
+        down_w_index = int((self.__board_width + 1) / 2) - 1
+        # Number of lower walls. Remove at least 1 for center. First one overrider border if present
+        down_nb = int((self.__board_height - 1) / 2) + 1
+        # Add lower walls
+        for h in range(down_nb):
+            self.__board[self.__board_height - 1 - h, down_w_index] = WALL
+
+
     # Generate the snake on the board
     # TODO: make sure the tile in front of the snake is free
     # TODO: make more stable (to different envs shape)
@@ -235,12 +275,15 @@ class SnakeEnv(gym.Env):
         h = math.ceil(self.__board_height / 2) - 1
         # Place head
         self.__head_pos = [h, w]
-        # Store direction -> 0 for UP, 1 for RIGHT, 2 for DOWN, 3 for LEFT
-        self.__direction = LEFT
         # Create snake (only 1 tile on the right of the head)
         # self.__snake_path = [RIGHT, RIGHT, UP, RIGHT, DOWN, DOWN, DOWN, LEFT]
-        self.__snake_path = [RIGHT]
-
+        if self.__board[h, w+1] == EMPTY:
+            # Store direction -> 0 for UP, 1 for RIGHT, 2 for DOWN, 3 for LEFT
+            self.__direction = LEFT
+            self.__snake_path = [RIGHT]
+        else:
+            self.__direction = DOWN
+            self.__snake_path = [UP]
 
     # Remove the snake from the board (before re-placing it)
     def __remove_snake(self):
@@ -318,7 +361,6 @@ class SnakeEnv(gym.Env):
     def render(self, mode='human', close=False):
         if mode == 'print':
             print(self.__board)
-            # print(self.__digestion)
         elif mode == 'human':
             # If necessary, init window
             if self.__screen is None:
@@ -356,16 +398,60 @@ class SnakeEnv(gym.Env):
                 for x in range(len(self.__board[y])):
                     x_coord = self.__tile_width * x + self.__margin_left
                     y_coord = self.__tile_height * y + self.__margin_top
-                    color = self.__colors[self.__board[self.__board_height - 1 - y,x]]
+                    color = self.__colors[self.__board[self.__board_height - 1 - y, x]] # pygame y coordinates uses 0 on top and grows toward bottom, therefore need to invert y
                     # Draw
-                    gfxdraw.box(self.__surf, pygame.Rect(x_coord, y_coord, self.__tile_width, self.__tile_height), color) # pygame y coordinates uses 0 on top and grows toward bottom, therefore need to invert y
-
+                    gfxdraw.box(self.__surf, pygame.Rect(x_coord, y_coord, self.__tile_width, self.__tile_height), color)
+            # Draw decorations
+            self.__draw_decorations()
             # Render
             self.__surf = pygame.transform.flip(self.__surf, False, True)
             self.__screen.blit(self.__surf, (0, 0))
             # pygame.event.pump()
             self.__clock.tick(self.metadata["render_fps"])
             pygame.display.flip()
+
+
+    # Draw decorations on the snake
+    def __draw_decorations(self):
+        # Get coordinates of head
+        hh, hw = self.__head_pos
+        hh = self.__board_height - 1 - hh  # Since matrix and pygame coord system are opposed
+        x_coord_head = self.__tile_width * hw + self.__margin_left
+        y_coord_head = self.__tile_height * hh + self.__margin_top
+        # Distinguish head direction
+        if self.__direction == UP:
+            # Delete first quarter to make head smaller (and make space for tongue)
+            gfxdraw.box(self.__surf, pygame.Rect(x_coord_head, y_coord_head + self.__tile_height, self.__tile_width, -(self.__tile_height / 4)), self.__colors[EMPTY])
+            # Draw tongue
+            gfxdraw.box(self.__surf, pygame.Rect(x_coord_head + (self.__tile_width * 3 / 8), y_coord_head + self.__tile_height, self.__tile_width / 4, -(self.__tile_height / 4)), self.__decoration_colors.get('tongue'))
+            # Draw eyes
+            gfxdraw.filled_circle(self.__surf, int(x_coord_head + (self.__tile_width / 4)),  int(y_coord_head + (self.__tile_height / 2)), int(self.__tile_width / 8), (0, 0, 0))
+            gfxdraw.filled_circle(self.__surf, int(x_coord_head + (self.__tile_width * 3 / 4)),  int(y_coord_head + (self.__tile_height / 2)), int(self.__tile_width / 8), (0, 0, 0))
+        elif self.__direction == RIGHT:
+            # Delete first quarter to make head smaller (and make space for tongue)
+            gfxdraw.box(self.__surf, pygame.Rect(x_coord_head + self.__tile_width, y_coord_head, -(self.__tile_width / 4), self.__tile_height), self.__colors[EMPTY])
+            # Draw tongue
+            gfxdraw.box(self.__surf, pygame.Rect(x_coord_head + self.__tile_width, y_coord_head + (self.__tile_height * 3 / 8), -(self.__tile_width / 4), self.__tile_height / 4), self.__decoration_colors.get('tongue'))
+            # Draw eyes
+            gfxdraw.filled_circle(self.__surf, int(x_coord_head + (self.__tile_width / 2)),  int(y_coord_head + (self.__tile_height / 4)), int(self.__tile_width / 8), (0, 0, 0))
+            gfxdraw.filled_circle(self.__surf, int(x_coord_head + (self.__tile_width / 2)),  int(y_coord_head + (self.__tile_height * 3 / 4)), int(self.__tile_width / 8), (0, 0, 0))
+        elif self.__direction == DOWN:
+            # Delete first quarter to make head smaller (and make space for tongue)
+            gfxdraw.box(self.__surf, pygame.Rect(x_coord_head, y_coord_head, self.__tile_width, self.__tile_height / 4), self.__colors[EMPTY])
+            # Draw tongue
+            gfxdraw.box(self.__surf, pygame.Rect(x_coord_head + (self.__tile_width * 3 / 8), y_coord_head, self.__tile_width / 4, self.__tile_height / 4), self.__decoration_colors.get('tongue'))
+            # Draw eyes
+            gfxdraw.filled_circle(self.__surf, int(x_coord_head + (self.__tile_width / 4)),  int(y_coord_head + (self.__tile_height / 2)), int(self.__tile_width / 8), (0, 0, 0))
+            gfxdraw.filled_circle(self.__surf, int(x_coord_head + (self.__tile_width * 3 / 4)),  int(y_coord_head + (self.__tile_height / 2)), int(self.__tile_width / 8), (0, 0, 0))
+        elif self.__direction == LEFT:
+            # Delete first quarter to make head smaller (and make space for tongue)
+            gfxdraw.box(self.__surf, pygame.Rect(x_coord_head, y_coord_head, self.__tile_width / 4, self.__tile_height), self.__colors[EMPTY])
+            # Draw tongue
+            gfxdraw.box(self.__surf, pygame.Rect(x_coord_head, y_coord_head + (self.__tile_height * 3 / 8), self.__tile_width / 4, self.__tile_height / 4), self.__decoration_colors.get('tongue'))
+            # Draw eyes
+            gfxdraw.filled_circle(self.__surf, int(x_coord_head + (self.__tile_width / 2)),  int(y_coord_head + (self.__tile_height / 4)), int(self.__tile_width / 8), (0, 0, 0))
+            gfxdraw.filled_circle(self.__surf, int(x_coord_head + (self.__tile_width / 2)),  int(y_coord_head + (self.__tile_height * 3 / 4)), int(self.__tile_width / 8), (0, 0, 0))
+        # TODO draw body decorations
 
 
     def __check_closing(self, pg):
@@ -408,6 +494,9 @@ class SnakeEnv(gym.Env):
         self.__colors = [empty_color, wall_color, target_color, body_color, digestion_color, head_up_color, head_right_color, head_down_color, head_left_color]
         # Colors for the background
         self.__bg_color = (25, 250, 250)
+        # Decorations colors
+        self.__decoration_colors = {'eyes': (0, 0, 0),
+                                    'tongue': (255, 0, 0)}
 
 
     def close(self):
