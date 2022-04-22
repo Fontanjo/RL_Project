@@ -20,6 +20,7 @@ README file for Snake gym environment!
   - [ ] Describe requisite of custom board
   - [ ] Describe arguments (e.g. possible boards)
   - [ ] Show stats (e.g. points/length)
+- [ ] Ev. add max moves to get target
 
 
 
