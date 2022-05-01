@@ -37,10 +37,10 @@ INITIAL_TIMEOUT = 1000 # In ms
 TIMEOUT_DECREASE = 0.95
 
 class SnakeEnv(gym.Env):
-    metadata = {'render.modes': ['human', 'print'], "render_fps": 50}
+    metadata = {'render.modes': ['human', 'print'], 'state_mode': ['matrix', 'states'], 'reward_mode': ['normal', 'extended'], "render_fps": 50}
 
 
-    def __init__(self, width=10, height=10, solid_border=True, shape='Normal', custom_board=None, mode='computer'):
+    def __init__(self, width=10, height=10, solid_border=True, shape='Normal', custom_board=None, player='computer', state_mode='matrix', reward_mode='normal'):
         # Store informations
         if custom_board != None:
             # Remember that there is a customized board
@@ -52,10 +52,14 @@ class SnakeEnv(gym.Env):
             self.__board_height = height
             self.__board_solid_border = solid_border
             self.__board_type = 'shape'
+        # Save reward mode
+        self.__reward_mode = reward_mode
+        # Save state mode
+        self.__state_mode = state_mode
         # Ensure actions are valid
         self.__possible_actions = [0, 1, 2]
         # Initialize variables
-        self.reset(mode=mode)
+        self.reset(player=player)
 
 
 
@@ -80,17 +84,22 @@ class SnakeEnv(gym.Env):
             new_h_pos = ((old_h + 1) % self.__board_height, old_w)
         if self.__direction == LEFT:
             new_h_pos = (old_h, (old_w + self.__board_width - 1) % self.__board_width)
+
+        # Check if done
+        done = False
+
         # Check if collision
         if self.__board[new_h_pos] == WALL or self.__board[new_h_pos] == BODY:
-            return self.__board.copy(), COLLISION_REWARD, True, {}
+            rew = self.__compute_reward(True, False)
+            done = True
         # Check if target
         if self.__board[new_h_pos] == TARGET:
-            reward = TARGET_REWARD
             self.__digestion.append(len(self.__snake_path) + len(self.__digestion) + 1) # Digest when the last part of the tail reaches the target position
             # Place a new target
             self.__place_target()
+            rew = self.__compute_reward(False, True)
         else:
-            reward = SURVIVED_REWARD
+            rew = self.__compute_reward(False, False)
         # Move
         self.__move_snake(self.__direction)
         # Update board
@@ -98,11 +107,13 @@ class SnakeEnv(gym.Env):
         self.__place_snake()
         # Digest by one all the target eated
         self.__digestion = [x - 1 for x in self.__digestion]
+        # Compute new state and info
+        s, info = self.__compute_state_info()
         # Return
-        return self.__board.copy(), reward, False, {}
+        return s, rew, done, info
 
 
-    def reset(self, width=None, height=None, solid_border=None, shape=None, custom_board=None, mode='computer'):
+    def reset(self, width=None, height=None, solid_border=None, shape=None, custom_board=None, player='computer', state_mode=None, reward_mode=None):
         # If a new custom board is added, or if there was one before and no new shape has been specified
         if custom_board != None or (shape == None and self.__board_type == 'Custom'):
             # Remember that there is a customized board
@@ -121,6 +132,10 @@ class SnakeEnv(gym.Env):
             if shape is not None: self.__board_type = shape
             # Generate the board
             self.__generate_board()
+        # Possibly change reward mode
+        if reward_mode is not None: self.__reward_mode = reward_mode
+        # Possibly change state mode
+        if state_mode is not None: self.__state_mode = state_mode
         # Define action space
         # 3 possible actions: continue in the same direction, turn right, turn left
         self.action_space = spaces.Discrete(3)
@@ -142,11 +157,178 @@ class SnakeEnv(gym.Env):
         self.__screen_width = 600
         # Screen height
         self.__screen_height = 400
-        # Check game mode
-        self.__play_mode = mode
-        if mode == 'human':
+        # Check game player
+        self.__player = player
+        if player == 'human':
             self.__play_human()
 
+
+    def __compute_reward(self, done, target):
+        # Compute reward
+        if done:
+            r = COLLISION_REWARD
+        elif target:
+            r = TARGET_REWARD
+            if self.__reward_mode == 'extended':
+                # TODO add reward for getting closer to target, penalty for getting away
+                pass
+        else:
+            r = SURVIVED_REWARD
+
+        return r
+
+
+    # Compute reward based on old state, new state (action), and state mode
+    def __compute_state_info(self):
+        # Compute info
+        i = {}
+
+
+        # Compute new state
+        if self.__state_mode == 'matrix':
+            # State
+            s = self.__board.copy()
+        elif self.__state_mode == 'states':
+            # In state mode, the state is represented by a single int
+            # The int is the decimal representation of a binary array defined as following:
+            # first 2 bits: head direction
+            # 0-2 bits: target position (8 possibilities)
+            # 3-9 bits: obstacle in front or not, obstacle in front-right or not, obstacle on the right or not, ...
+                # Obstacle behind always true, so ignore
+            bit_str = ''
+
+            # Normalize matrix (make snake face up)
+            if self.__direction == UP:
+                m = self.__board.copy()
+                hx, hy = self.__head_pos
+                tx, ty = self.__target_position
+            elif self.__direction == RIGHT:
+                m = self.__rotate_matrix_counter_clockwise(self.__board.copy())
+                # Get coordinates on new system
+                hx, hy = np.where(np.array(m) == HEAD_RIGHT)
+            elif self.__direction == DOWN:
+                m = self.__rotate_matrix_counter_clockwise(self.__board.copy())
+                m = self.__rotate_matrix_counter_clockwise(m)
+                # Get coordinates on new system
+                hx, hy = np.where(np.array(m) == HEAD_DOWN)
+            elif self.__direction == LEFT:
+                m = self.__rotate_matrix_counter_clockwise(self.__board.copy())
+                m = self.__rotate_matrix_counter_clockwise(m)
+                m = self.__rotate_matrix_counter_clockwise(m)
+                # Get head coordinates on new system
+                hx, hy = np.where(np.array(m) == HEAD_LEFT)
+
+            # Get target coordinates on new system
+            tx, ty = np.where(np.array(m) == TARGET)
+            # Security checks
+            assert len(tx) == 1
+            assert len(ty) == 1
+            if self.__direction != UP:
+                assert len(hx) == 1
+                assert len(hy) == 1
+            # np.where returns an array, extract first (and only) element
+            tx, ty = tx[0], ty[0]
+            if self.__direction != UP:
+                hx, hy = hx[0], hy[0]
+
+
+            # Target position
+            target_pos_matrix = np.zeros((3,3))
+            # tx, ty = self.__target_position
+            # hx, hy = self.__head_pos
+            if tx < hx and ty == hy:
+                bit_str += '000'
+                target_pos_matrix[0, 1] = 1
+            elif tx < hx and ty > hy:
+                bit_str += '001'
+                target_pos_matrix[0, 2] = 1
+            elif tx == hx and ty > hy:
+                bit_str += '010'
+                target_pos_matrix[1, 2] = 1
+            elif tx > hx and ty > hy:
+                bit_str += '011'
+                target_pos_matrix[2, 2] = 1
+            elif tx > hx and ty == hy:
+                bit_str += '100'
+                target_pos_matrix[2, 1] = 1
+            elif tx > hx and ty < hy:
+                bit_str += '101'
+                target_pos_matrix[2, 0] = 1
+            elif tx == hx and ty < hy:
+                bit_str += '110'
+                target_pos_matrix[1, 0] = 1
+            elif tx > hx and ty < hy:
+                bit_str += '111'
+                target_pos_matrix[0, 0] = 1
+
+            # Add info
+            i['target_pos'] = target_pos_matrix
+
+            # Convert to np array to use better indices
+            m = np.array(m)
+
+            # Obstacles
+            walls_matrix = np.zeros((3,3))
+            h, w = len(m), len(m[0])
+            # Obstacle in front
+            if m[(hx - 1 + h) % h, hy] in [WALL, BODY]:
+                bit_str += '1'
+                walls_matrix[0,1] = 1
+            else:
+                bit_str += '0'
+            # Obstacle front right
+            if m[(hx - 1 + h) % h, (hy + 1) % w] in [WALL, BODY]:
+                bit_str += '1'
+                walls_matrix[0,2] = 1
+            else:
+                bit_str += '0'
+            # Obstacle right
+            if m[hx, (hy + 1) % w] in [WALL, BODY]:
+                bit_str += '1'
+                walls_matrix[1,2] = 1
+            else:
+                bit_str += '0'
+            # Obstacle behind right
+            if m[(hx + 1) % h, (hy + 1) % w] in [WALL, BODY]:
+                bit_str += '1'
+                walls_matrix[2,2] = 1
+            else:
+                bit_str += '0'
+            # Behind the head there is always a block (body)
+            walls_matrix[2,1] = 1
+            # Obstacle behind left
+            if m[(hx + 1) % h, (hy - 1 + w) % w] in [WALL, BODY]:
+                bit_str += '1'
+                walls_matrix[2,0] = 1
+            else:
+                bit_str += '0'
+            # Obstacle left
+            if m[hx, (hy - 1 + w) % w] in [WALL, BODY]:
+                bit_str += '1'
+                walls_matrix[1,0] = 1
+            else:
+                bit_str += '0'
+            # Obstacle front left
+            if m[(hx - 1 + h) % h, (hy - 1 + w) % w] in [WALL, BODY]:
+                bit_str += '1'
+                walls_matrix[0,0] = 1
+            else:
+                bit_str += '0'
+
+
+            # Add info
+            i['walls'] = walls_matrix
+
+            # Convert binary string to int
+            s = int(bit_str, 2)
+
+        # Return new state, reward, info
+        return s, i
+
+
+    # Return a matrix that is the counter clockwise 90 degree rotation of the input matrix
+    def __rotate_matrix_counter_clockwise(self, m):
+        return [[m[j][i] for j in range(len(m))] for i in range(len(m[0])-1,-1,-1)]
 
     # Generate the board on which the snake moves
     def __generate_board(self):
@@ -355,6 +537,7 @@ class SnakeEnv(gym.Env):
         if len(possible) >= 0:
             pos = np.random.randint(len(possible[0]))
             self.__board[possible[0][pos], possible[1][pos]] = TARGET
+            self.__target_position = [possible[0][pos], possible[1][pos]]
 
 
     # TODO add comments on what each line does (for pygame code)
@@ -384,7 +567,7 @@ class SnakeEnv(gym.Env):
                 self.__compute_measures()
                 # Check if the close button in pressed
                 # th = threading.Thread(target=__check_closing, args=(self))
-                if self.__play_mode != 'human':
+                if self.__player != 'human':
                     th = threading.Thread(target=self.__check_closing, args=[pygame])
                     th.start()
             if self.__clock is None:
@@ -501,6 +684,10 @@ class SnakeEnv(gym.Env):
 
     def close(self):
         if self.__screen is not None:
+            self.__running = False
+            # Wait in order for __check_closing to finish witout error
+            # TODO replace timer with waiting for thread to exit
+            time.sleep(0.5)
             pygame.display.quit()
             pygame.quit()
 
