@@ -28,8 +28,10 @@ DOWN = 2
 LEFT = 3
 
 # Rewards
+TARGET_REWARD = 10
 COLLISION_REWARD = -10
-TARGET_REWARD = 1
+REWARD_TOWARD = 1
+REWARD_AWAY = -1
 SURVIVED_REWARD = 0
 
 # Human mode
@@ -93,13 +95,13 @@ class SnakeEnv(gym.Env):
             rew = self.__compute_reward(True, False)
             done = True
         # Check if target
-        if self.__board[new_h_pos] == TARGET:
+        elif self.__board[new_h_pos] == TARGET:
             self.__digestion.append(len(self.__snake_path) + len(self.__digestion) + 1) # Digest when the last part of the tail reaches the target position
             # Place a new target
             self.__place_target()
             rew = self.__compute_reward(False, True)
         else:
-            rew = self.__compute_reward(False, False)
+            rew = self.__compute_reward(False, False, old_pos = (old_h, old_w), new_pos = new_h_pos)
         # Move
         self.__move_snake(self.__direction)
         # Update board
@@ -163,17 +165,31 @@ class SnakeEnv(gym.Env):
             self.__play_human()
 
 
-    def __compute_reward(self, done, target):
+    def __compute_reward(self, done, target, old_pos = None, new_pos = None):
         # Compute reward
         if done:
+            print('collision')
             r = COLLISION_REWARD
         elif target:
             r = TARGET_REWARD
-            if self.__reward_mode == 'extended':
-                # TODO add reward for getting closer to target, penalty for getting away
-                pass
         else:
             r = SURVIVED_REWARD
+            if self.__reward_mode == 'extended':
+                # Get target position
+                target_x, target_y = self.__target_position
+                # Get head positions
+                assert old_pos is not None
+                assert new_pos is not None
+                old_x, old_y = old_pos
+                new_x, new_y = new_pos
+                # Check if we got closer or away
+                dist_before = np.abs(target_x - old_x) + np.abs(target_y - old_y)
+                dist_after = np.abs(target_x - new_x) + np.abs(target_y - new_y)
+                # Ev add reward
+                if dist_before > dist_after:
+                    r += REWARD_TOWARD
+                elif dist_before < dist_after:
+                    r += REWARD_AWAY
 
         return r
 
