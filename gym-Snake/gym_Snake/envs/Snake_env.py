@@ -29,9 +29,9 @@ LEFT = 3
 
 # Rewards
 TARGET_REWARD = 10
-COLLISION_REWARD = -10
-REWARD_TOWARD = 1
-REWARD_AWAY = -1
+COLLISION_REWARD = -100
+REWARD_TOWARD = 0
+REWARD_AWAY = 0
 SURVIVED_REWARD = 0
 
 # Human mode
@@ -42,7 +42,7 @@ class SnakeEnv(gym.Env):
     metadata = {'render.modes': ['human', 'print'], 'state_mode': ['matrix', 'states'], 'reward_mode': ['normal', 'extended'], "render_fps": 50}
 
 
-    def __init__(self, width=10, height=10, solid_border=True, shape='Normal', custom_board=None, player='computer', state_mode='matrix', reward_mode='normal'):
+    def __init__(self, width=10, height=10, solid_border=True, shape='Normal', custom_board=None, player='computer', state_mode='states', reward_mode='normal'):
         # Store informations
         if custom_board != None:
             # Remember that there is a customized board
@@ -142,7 +142,10 @@ class SnakeEnv(gym.Env):
         # 3 possible actions: continue in the same direction, turn right, turn left
         self.action_space = spaces.Discrete(3)
         # Define observation space
-        self.observation_space = spaces.Discrete(self.__board_width * self.__board_height)
+        if self.__state_mode == 'matrix':
+            self.observation_space = spaces.Discrete(self.__board_width * self.__board_height)
+        else:
+            self.observation_space = spaces.Discrete(2**10)
         # Keep track of targets to digest
         self.__digestion = []
         # Generate the snake
@@ -163,12 +166,14 @@ class SnakeEnv(gym.Env):
         self.__player = player
         if player == 'human':
             self.__play_human()
+        # Return initial state
+        s, _ = self.__compute_state_info()
+        return s
 
 
     def __compute_reward(self, done, target, old_pos = None, new_pos = None):
         # Compute reward
         if done:
-            print('collision')
             r = COLLISION_REWARD
         elif target:
             r = TARGET_REWARD
@@ -240,7 +245,7 @@ class SnakeEnv(gym.Env):
             assert len(tx) == 1
             assert len(ty) == 1
             if self.__direction != UP:
-                assert len(hx) == 1
+                assert len(hx) == 1, f"h_pos = {self.__head_pos}\nboard = {self.__board}\nm = {np.array(m)}"
                 assert len(hy) == 1
             # np.where returns an array, extract first (and only) element
             tx, ty = tx[0], ty[0]
@@ -514,9 +519,13 @@ class SnakeEnv(gym.Env):
             temp_h = (temp_h + self.__board_height) % self.__board_height
             # Add body
             if d in self.__digestion:
-                self.__board[temp_h, temp_w] = DIGESTION
+                # Do not override head (when die)
+                if temp_h != self.__head_pos[0] or temp_w != self.__head_pos[1]:
+                    self.__board[temp_h, temp_w] = DIGESTION
             else:
-                self.__board[temp_h, temp_w] = BODY
+                # Do not override head (when die)
+                if temp_h != self.__head_pos[0] or temp_w != self.__head_pos[1]:
+                    self.__board[temp_h, temp_w] = BODY
             d -= 1
 
 
