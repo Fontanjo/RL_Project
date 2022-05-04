@@ -21,6 +21,9 @@ HEAD_RIGHT = 6
 HEAD_DOWN = 7
 HEAD_LEFT = 8
 
+HEAD_BLOCKS = [HEAD_UP, HEAD_RIGHT, HEAD_DOWN, HEAD_LEFT]
+COLLISION_BLOCKS = [WALL, BODY, DIGESTION]
+
 # Directions
 UP = 0
 RIGHT = 1
@@ -30,7 +33,7 @@ LEFT = 3
 # Rewards
 TARGET_REWARD = 10
 COLLISION_REWARD = -100
-REWARD_TOWARD = 0
+REWARD_TOWARD = 5
 REWARD_AWAY = 0
 SURVIVED_REWARD = 0
 
@@ -91,7 +94,7 @@ class SnakeEnv(gym.Env):
         done = False
 
         # Check if collision
-        if self.__board[new_h_pos] == WALL or self.__board[new_h_pos] == BODY:
+        if self.__board[new_h_pos] in COLLISION_BLOCKS:
             rew = self.__compute_reward(True, False)
             done = True
         # Check if target
@@ -292,25 +295,25 @@ class SnakeEnv(gym.Env):
             walls_matrix = np.zeros((3,3))
             h, w = len(m), len(m[0])
             # Obstacle in front
-            if m[(hx - 1 + h) % h, hy] in [WALL, BODY]:
+            if m[(hx - 1 + h) % h, hy] in COLLISION_BLOCKS:
                 bit_str += '1'
                 walls_matrix[0,1] = 1
             else:
                 bit_str += '0'
             # Obstacle front right
-            if m[(hx - 1 + h) % h, (hy + 1) % w] in [WALL, BODY]:
+            if m[(hx - 1 + h) % h, (hy + 1) % w] in COLLISION_BLOCKS:
                 bit_str += '1'
                 walls_matrix[0,2] = 1
             else:
                 bit_str += '0'
             # Obstacle right
-            if m[hx, (hy + 1) % w] in [WALL, BODY]:
+            if m[hx, (hy + 1) % w] in COLLISION_BLOCKS:
                 bit_str += '1'
                 walls_matrix[1,2] = 1
             else:
                 bit_str += '0'
             # Obstacle behind right
-            if m[(hx + 1) % h, (hy + 1) % w] in [WALL, BODY]:
+            if m[(hx + 1) % h, (hy + 1) % w] in COLLISION_BLOCKS:
                 bit_str += '1'
                 walls_matrix[2,2] = 1
             else:
@@ -318,19 +321,19 @@ class SnakeEnv(gym.Env):
             # Behind the head there is always a block (body)
             walls_matrix[2,1] = 1
             # Obstacle behind left
-            if m[(hx + 1) % h, (hy - 1 + w) % w] in [WALL, BODY]:
+            if m[(hx + 1) % h, (hy - 1 + w) % w] in COLLISION_BLOCKS:
                 bit_str += '1'
                 walls_matrix[2,0] = 1
             else:
                 bit_str += '0'
             # Obstacle left
-            if m[hx, (hy - 1 + w) % w] in [WALL, BODY]:
+            if m[hx, (hy - 1 + w) % w] in COLLISION_BLOCKS:
                 bit_str += '1'
                 walls_matrix[1,0] = 1
             else:
                 bit_str += '0'
             # Obstacle front left
-            if m[(hx - 1 + h) % h, (hy - 1 + w) % w] in [WALL, BODY]:
+            if m[(hx - 1 + h) % h, (hy - 1 + w) % w] in COLLISION_BLOCKS:
                 bit_str += '1'
                 walls_matrix[0,0] = 1
             else:
