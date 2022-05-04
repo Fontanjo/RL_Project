@@ -31,11 +31,11 @@ DOWN = 2
 LEFT = 3
 
 # Rewards
-TARGET_REWARD = 10
-COLLISION_REWARD = -100
+REWARD_TARGET = 10
+REWARD_COLLISION = -100
 REWARD_TOWARD = 5
 REWARD_AWAY = 0
-SURVIVED_REWARD = 0
+REWARD_SURVIVED = 0
 
 # Human mode
 INITIAL_TIMEOUT = 1000 # In ms
@@ -45,7 +45,9 @@ class SnakeEnv(gym.Env):
     metadata = {'render.modes': ['human', 'print'], 'state_mode': ['matrix', 'states'], 'reward_mode': ['normal', 'extended'], "render_fps": 50}
 
 
-    def __init__(self, width=10, height=10, solid_border=True, shape='Normal', custom_board=None, player='computer', state_mode='states', reward_mode='normal'):
+    def __init__(self, width=10, height=10, solid_border=True, shape='Normal', custom_board=None, player='computer', state_mode='states', reward_mode='normal', rewards=None):
+        # Import global variables to possibly modify them
+        global REWARD_TARGET, REWARD_COLLISION, REWARD_TOWARD, REWARD_AWAY, REWARD_SURVIVED
         # Store informations
         if custom_board != None:
             # Remember that there is a customized board
@@ -59,6 +61,13 @@ class SnakeEnv(gym.Env):
             self.__board_type = 'shape'
         # Save reward mode
         self.__reward_mode = reward_mode
+        # Change rewards
+        if rewards is not None:
+            REWARD_TARGET       = rewards.get('REWARD_TARGET', REWARD_TARGET)
+            REWARD_COLLISION    = rewards.get('REWARD_COLLISION', REWARD_COLLISION)
+            REWARD_TOWARD       = rewards.get('REWARD_TOWARD', REWARD_TOWARD)
+            REWARD_AWAY         = rewards.get('REWARD_AWAY', REWARD_AWAY)
+            REWARD_SURVIVED     = rewards.get('REWARD_SURVIVED', REWARD_SURVIVED)
         # Save state mode
         self.__state_mode = state_mode
         # Ensure actions are valid
@@ -118,7 +127,9 @@ class SnakeEnv(gym.Env):
         return s, rew, done, info
 
 
-    def reset(self, width=None, height=None, solid_border=None, shape=None, custom_board=None, player='computer', state_mode=None, reward_mode=None):
+    def reset(self, width=None, height=None, solid_border=None, shape=None, custom_board=None, player='computer', state_mode=None, reward_mode=None, rewards=None):
+        # Import global variables to possibly modify them
+        global REWARD_TARGET, REWARD_COLLISION, REWARD_TOWARD, REWARD_AWAY, REWARD_SURVIVED
         # If a new custom board is added, or if there was one before and no new shape has been specified
         if custom_board != None or (shape == None and self.__board_type == 'Custom'):
             # Remember that there is a customized board
@@ -177,11 +188,11 @@ class SnakeEnv(gym.Env):
     def __compute_reward(self, done, target, old_pos = None, new_pos = None):
         # Compute reward
         if done:
-            r = COLLISION_REWARD
+            r = REWARD_COLLISION
         elif target:
-            r = TARGET_REWARD
+            r = REWARD_TARGET
         else:
-            r = SURVIVED_REWARD
+            r = REWARD_SURVIVED
             if self.__reward_mode == 'extended':
                 # Get target position
                 target_x, target_y = self.__target_position
@@ -803,7 +814,7 @@ class SnakeEnv(gym.Env):
             _, reward, done, _ = self.step(next_move)
 
             # Reduce timeout
-            if reward == TARGET_REWARD:
+            if reward == REWARD_TARGET:
                 self.__timeout *= TIMEOUT_DECREASE
 
             # Reset default move
