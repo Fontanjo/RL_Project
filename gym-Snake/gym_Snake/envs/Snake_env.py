@@ -108,7 +108,7 @@ class SnakeEnv(gym.Env):
             done = True
         # Check if target
         elif self.__board[new_h_pos] == TARGET:
-            self.__digestion.append(len(self.__snake_path) + len(self.__digestion) + 1) # Digest when the last part of the tail reaches the target position
+            self.__digestion.append(len(self.__snake_path) + 1) # Digest when the last part of the tail reaches the target position
             # Place a new target
             self.__place_target()
             rew = self.__compute_reward(False, True)
@@ -226,7 +226,6 @@ class SnakeEnv(gym.Env):
         elif self.__state_mode == 'states':
             # In state mode, the state is represented by a single int
             # The int is the decimal representation of a binary array defined as following:
-            # first 2 bits: head direction
             # 0-2 bits: target position (8 possibilities)
             # 3-9 bits: obstacle in front or not, obstacle in front-right or not, obstacle on the right or not, ...
                 # Obstacle behind always true, so ignore
@@ -565,6 +564,8 @@ class SnakeEnv(gym.Env):
         # Else, finish digestion
         else:
             self.__digestion.remove(0)
+            # Update remaining digestions
+            self.__digestion = [x + 1 for x in self.__digestion]
 
 
     # Place the target
