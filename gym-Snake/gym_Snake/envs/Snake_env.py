@@ -79,6 +79,8 @@ class SnakeEnv(gym.Env):
 
     # Actions: 0 continue, 1 turn right, 2 turn left
     def step(self, action):
+        # Update step count
+        self.__total_steps += 1
         if action not in self.__possible_actions:
             action = 0
         # Get new direction
@@ -123,6 +125,8 @@ class SnakeEnv(gym.Env):
         self.__digestion = [x - 1 for x in self.__digestion]
         # Compute new state and info
         s, info = self.__compute_state_info()
+        # Update total reward
+        self.__total_reward += rew
         # Return
         return s, rew, done, info
 
@@ -162,6 +166,10 @@ class SnakeEnv(gym.Env):
             self.observation_space = spaces.Discrete(2**10)
         # Keep track of targets to digest
         self.__digestion = []
+        # Keep track of steps
+        self.__total_steps = 0
+        # Keep track of the total reward
+        self.__total_reward = 0
         # Generate the snake
         self.__generate_snake()
         # Place the snake on the board
@@ -174,11 +182,13 @@ class SnakeEnv(gym.Env):
         self.__clock = None
         # Screen width
         self.__screen_width = 600
+        # Info table width
+        self.__info_table_width = 300
         # Screen height
-        self.__screen_height = 400
+        self.__screen_height = 700
         # Check game player
         self.__player = player
-        if player == 'human':
+        if self.__player == 'human':
             self.__play_human()
         # Return initial state
         s, _ = self.__compute_state_info()
@@ -602,7 +612,7 @@ class SnakeEnv(gym.Env):
                 except Exception as e:
                     pass
                 # Set screen size
-                self.__screen = pygame.display.set_mode((self.__screen_width, self.__screen_height))
+                self.__screen = pygame.display.set_mode((self.__screen_width + self.__info_table_width, self.__screen_height))
                 # Compute the necessary measures
                 self.__compute_measures()
                 # Check if the close button in pressed
@@ -613,7 +623,7 @@ class SnakeEnv(gym.Env):
             if self.__clock is None:
                 self.__clock = pygame.time.Clock()
             # Create painting surface
-            self.__surf = pygame.Surface((self.__screen_width, self.__screen_height))
+            self.__surf = pygame.Surface((self.__screen_width + self.__info_table_width, self.__screen_height))
             # Fill surface with white
             self.__surf.fill(self.__bg_color)
             # Draw cells
@@ -626,12 +636,15 @@ class SnakeEnv(gym.Env):
                     gfxdraw.box(self.__surf, pygame.Rect(x_coord, y_coord, self.__tile_width, self.__tile_height), color)
             # Draw decorations
             self.__draw_decorations()
+            # # Draw information table
+            self.__draw_info_table()
             # Render
             self.__surf = pygame.transform.flip(self.__surf, False, True)
             self.__screen.blit(self.__surf, (0, 0))
             # pygame.event.pump()
             self.__clock.tick(self.metadata["render_fps"])
             pygame.display.flip()
+            # self.__screen.update()
 
 
     # Draw decorations on the snake
@@ -675,6 +688,49 @@ class SnakeEnv(gym.Env):
             gfxdraw.filled_circle(self.__surf, int(x_coord_head + (self.__tile_width / 2)),  int(y_coord_head + (self.__tile_height / 4)), int(self.__tile_width / 8), (0, 0, 0))
             gfxdraw.filled_circle(self.__surf, int(x_coord_head + (self.__tile_width / 2)),  int(y_coord_head + (self.__tile_height * 3 / 4)), int(self.__tile_width / 8), (0, 0, 0))
         # TODO draw body decorations
+
+
+    def __draw_info_table(self):
+        ## TODO change font size based on space available
+        table_color = (181, 158, 94)
+        text_color = (135, 7, 105)
+        font_size = 24
+        stats_margin_top = 10
+        stats_margin_right = 10
+
+
+
+        # Draw table background
+        gfxdraw.box(self.__surf, pygame.Rect(self.__screen_width, self.__margin_top, self.__info_table_width * 0.85, self.__tile_height * len(self.__board)), table_color)
+
+        # Set font
+        font = pygame.font.Font(pygame.font.get_default_font(), font_size)
+
+        # Create text
+        texts = [
+                f'Snake length: {len(self.__snake_path) + 1}',
+                f'Targets eated: {len(self.__snake_path) + len(self.__digestion) - 1}',
+                f'Total reward: {self.__total_reward}',
+                f'Total steps: {self.__total_steps}'
+                ]
+
+        # Write on a new surface
+        text_surfs = [font.render(text, True, text_color) for text in texts]
+
+        # Flip (since will be flipped again after with the entire surface)
+        text_surfs = [pygame.transform.flip(text_surf, False, True) for text_surf in text_surfs]
+
+        # Place
+        text_rects = [text_surf.get_rect() for text_surf in text_surfs]
+        i = 1
+        for text_rect in text_rects:
+            text_rect.topleft = (self.__screen_width + stats_margin_right, self.__margin_top + self.__tile_height * len(self.__board) - stats_margin_top - font_size * i)
+            i += 1
+
+
+        # Draw
+        for text_surf, text_rect in zip(text_surfs, text_rects):
+            self.__surf.blit(text_surf, text_rect)
 
 
     def __check_closing(self, pg):
