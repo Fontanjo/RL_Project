@@ -3,6 +3,54 @@ README file for Snake gym environment!
 
 
 
+[**Prerequisites**](#prerequisites) | [**Build**](#build) | [**Examples**](#execution-examples) | [**Arguments**](#arguments)
+
+___
+
+##  Prerequisites
+
+
+* Clone this repository
+
+* Python3.6 and pip for python 3
+
+___
+
+## Build
+
+From main folder, register the new environment with:
+
+```
+$ pip install -e gym-snake
+```
+
+Import the new environment in a python script using
+
+```
+import gym
+import gym_Snake
+```
+___
+
+## Execution examples
+
+1. Generate environment with [**default parameters**](#arguments)
+```
+$ env = gym.make('Snake-v0')
+```
+
+2. 
+___
+
+## Arguments
+
+
+
+
+
+
+
+
 # TODO
 
 - [ ] Add new shapes
