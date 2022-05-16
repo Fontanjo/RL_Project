@@ -31,10 +31,10 @@ DOWN = 2
 LEFT = 3
 
 # Rewards
-REWARD_TARGET = 10
+REWARD_TARGET = 20
 REWARD_COLLISION = -100
-REWARD_TOWARD = 5
-REWARD_AWAY = 0
+REWARD_TOWARD = 1
+REWARD_AWAY = -1
 REWARD_SURVIVED = 0
 
 # Human mode
@@ -607,7 +607,7 @@ class SnakeEnv(gym.Env):
                     abspath = os.path.abspath(__file__)
                     dname = os.path.dirname(abspath)
                     os.chdir(dname)
-                    Icon = pygame.image.load('../../data/snake.png')
+                    Icon = pygame.image.load('../data/snake.png')
                     pygame.display.set_icon(Icon)
                 except Exception as e:
                     pass
