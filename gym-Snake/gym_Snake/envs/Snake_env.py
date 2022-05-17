@@ -31,7 +31,7 @@ DOWN = 2
 LEFT = 3
 
 # Rewards
-REWARD_TARGET = 20
+REWARD_TARGET = 10
 REWARD_COLLISION = -100
 REWARD_TOWARD = 1
 REWARD_AWAY = -1
@@ -584,10 +584,12 @@ class SnakeEnv(gym.Env):
         # Get empty tiles
         possible = np.where(self.__board == EMPTY)
         # If any empty tile found, place a target
-        if len(possible) >= 0:
+        if len(possible[0]) > 0:
             pos = np.random.randint(len(possible[0]))
             self.__board[possible[0][pos], possible[1][pos]] = TARGET
             self.__target_position = [possible[0][pos], possible[1][pos]]
+        else:
+            print('Game finished! You won!')
 
 
     # TODO add comments on what each line does (for pygame code)
@@ -607,7 +609,7 @@ class SnakeEnv(gym.Env):
                     abspath = os.path.abspath(__file__)
                     dname = os.path.dirname(abspath)
                     os.chdir(dname)
-                    Icon = pygame.image.load('../data/snake.png')
+                    Icon = pygame.image.load('../../data/snake.png')
                     pygame.display.set_icon(Icon)
                 except Exception as e:
                     pass
@@ -881,3 +883,59 @@ class SnakeEnv(gym.Env):
         self.close()
         self.__screen = None
         self.__clock = None
+
+
+    # Return a new env which is the exact same copy of the current one
+    def clone(self):
+        if self.__player == 'human':
+            print('Can only clone environment for computers (for now at least)')
+            return self
+        # Generate new env
+        # new_env = self.copy()
+        new_env = SnakeEnv()
+        # return new_env
+        # Override values
+        new_env.__board = self.__board.copy()
+        new_env.__board_width = self.__board_width
+        new_env.__board_height = self.__board_height
+        new_env.__board_solid_border = self.__board_solid_border
+        new_env.__board_type = self.__board_type
+        new_env.__head_pos = self.__head_pos
+        new_env.__snake_path = self.__snake_path.copy()
+        new_env.__digestion = self.__digestion.copy()
+        new_env.__direction = self.__direction
+        # Override board copy
+        new_env.__board_base = new_env.__board.copy()
+        # Save reward mode
+        new_env.__reward_mode = self.__reward_mode
+        # Save state mode
+        new_env.__state_mode = self.__state_mode
+        # Save player mode
+        new_env.__player = 'computer'
+
+        # # Ensure actions are valid
+        # new_env.__possible_actions = [0, 1, 2]
+        # # Initialize variables
+        new_env.__digestion = self.__digestion.copy()
+        # # Keep track of steps
+        new_env.__total_steps = self.__total_steps
+        # # Keep track of the total reward
+        new_env.__total_reward = self.__total_reward
+        # # Screen for render
+        # new_env.__screen = self.__screen.copy()
+        # # Clock for render
+        # new_env.__clock = self.__clock.copy()
+        # # Screen width
+        # new_env.__screen_width = 600
+        # # Info table width
+        # new_env.__info_table_width = 300
+        # # Screen height
+        # new_env.__screen_height = 700
+
+
+
+        return new_env
+
+
+    def deepcopy(self):
+        return self.clone()
