@@ -203,7 +203,7 @@ class SnakeEnv(gym.Env):
             r = REWARD_TARGET
         else:
             r = REWARD_SURVIVED
-            if self.__reward_mode == 'extended':
+            if self.__reward_mode in ['extended', 'adaptive']:
                 # Get target position
                 target_x, target_y = self.__target_position
                 # Get head positions
@@ -214,11 +214,15 @@ class SnakeEnv(gym.Env):
                 # Check if we got closer or away
                 dist_before = np.abs(target_x - old_x) + np.abs(target_y - old_y)
                 dist_after = np.abs(target_x - new_x) + np.abs(target_y - new_y)
+                # Possibly adapt reward according to body length
+                divider = 1
+                if self__reward_mode == 'adaptive':
+                    divider = len(self.__snake_path) # + 1 # Add 1 to include head
                 # Ev add reward
                 if dist_before > dist_after:
-                    r += REWARD_TOWARD
+                    r += REWARD_TOWARD / divider
                 elif dist_before < dist_after:
-                    r += REWARD_AWAY
+                    r += REWARD_AWAY / divider
 
         return r
 
