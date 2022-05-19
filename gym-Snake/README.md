@@ -39,14 +39,19 @@ ___
 $ env = gym.make('Snake-v0')
 ```
 
-2. 
+2.
 ___
 
 ## Arguments
 
 
+init / reset arguments:
 
+name     default     possible values          requisites  
+width=10, height=10, solid_border=True, shape='Normal', custom_board=None, player='computer', state_mode='states', reward_mode='normal', rewards=None
 
+render arguments
+- mode       'human'/'print'
 
 
 

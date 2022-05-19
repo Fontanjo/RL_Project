@@ -216,7 +216,7 @@ class SnakeEnv(gym.Env):
                 dist_after = np.abs(target_x - new_x) + np.abs(target_y - new_y)
                 # Possibly adapt reward according to body length
                 divider = 1
-                if self__reward_mode == 'adaptive':
+                if self.__reward_mode == 'adaptive':
                     divider = len(self.__snake_path) # + 1 # Add 1 to include head
                 # Ev add reward
                 if dist_before > dist_after:
