@@ -45,7 +45,9 @@ class SnakeEnv(gym.Env):
     metadata = {'render.modes': ['human', 'print'], 'state_mode': ['matrix', 'states'], 'reward_mode': ['normal', 'extended'], "render_fps": 50}
 
 
-    def __init__(self, width=10, height=10, solid_border=True, shape='Normal', custom_board=None, player='computer', state_mode='states', reward_mode='normal', rewards=None):
+    def __init__(self, seed=None, width=10, height=10, solid_border=True, shape='Normal', custom_board=None, player='computer', state_mode='states', reward_mode='normal', rewards=None):
+        # Set seed for random
+        if seed is not None: np.random.seed(seed)
         # Import global variables to possibly modify them
         global REWARD_TARGET, REWARD_COLLISION, REWARD_TOWARD, REWARD_AWAY, REWARD_SURVIVED
         # Store informations
@@ -131,7 +133,9 @@ class SnakeEnv(gym.Env):
         return s, rew, done, info
 
 
-    def reset(self, width=None, height=None, solid_border=None, shape=None, custom_board=None, player='computer', state_mode=None, reward_mode=None, rewards=None):
+    def reset(self, seed=None, width=None, height=None, solid_border=None, shape=None, custom_board=None, player='computer', state_mode=None, reward_mode=None, rewards=None):
+        # Set seed for random
+        if seed is not None: np.random.seed(seed)
         # Import global variables to possibly modify them
         global REWARD_TARGET, REWARD_COLLISION, REWARD_TOWARD, REWARD_AWAY, REWARD_SURVIVED
         # If a new custom board is added, or if there was one before and no new shape has been specified
