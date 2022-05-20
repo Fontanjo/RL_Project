@@ -58,7 +58,7 @@ class SnakeEnv(gym.Env):
             self.__board_width = width
             self.__board_height = height
             self.__board_solid_border = solid_border
-            self.__board_type = 'shape'
+            self.__board_type = shape
         # Save reward mode
         self.__reward_mode = reward_mode
         # Change rewards
