@@ -41,7 +41,7 @@ epsilon_min = 0.0002,explo_games = 5000,epsilon_games = 15000,render = False):
     number_of_action = env.action_space.n
     state = env.reset().repeat(2,axis=0).repeat(2,axis=1)
     
-    print(state)
+   
     episode_reward = 0
     
     done = False
