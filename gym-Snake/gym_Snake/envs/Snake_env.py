@@ -42,7 +42,7 @@ INITIAL_TIMEOUT = 1000 # In ms
 TIMEOUT_DECREASE = 0.95
 
 class SnakeEnv(gym.Env):
-    metadata = {'render.modes': ['human', 'print'], 'state_mode': ['matrix', 'states'], 'reward_mode': ['normal', 'extended'], "render_fps": 50}
+    metadata = {'render.modes': ['human', 'print'], 'state_mode': ['matrix', 'states'], 'reward_mode': ['normal', 'extended','adaptive'], "render_fps": 50}
 
 
     def __init__(self, width=10, height=10, solid_border=True, shape='Normal', custom_board=None, player='computer', state_mode='states', reward_mode='normal', rewards=None):
