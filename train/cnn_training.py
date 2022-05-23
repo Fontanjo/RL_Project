@@ -44,7 +44,10 @@ epsilon_min = 0.0002,explo_games = 5000,epsilon_games = 15000,render = False):
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
    
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
