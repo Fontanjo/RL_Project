@@ -11,6 +11,9 @@ import gym_Snake
 from keras import layers,Model,optimizers,losses
 import tensorflow as tf
 
+model = None
+model_target = None
+replay_buffer = None
 
 def create_small_Q_network(input_matrix,number_of_action):
 
@@ -34,32 +37,22 @@ def create_small_Q_network(input_matrix,number_of_action):
     return Model(inputs=inputs,outputs=action)
 
 
-def play_epoch(env,model,model_target,replay_buffer,frame_number,epoch_number,Q_update,target_update, loss_function,optimizer,
-discount = 0.99,max_steps_per_epoch = 1000,
-epsilon_min = 0.0002,explo_games = 5000,epsilon_games = 15000,render = False):
+def play_epoch(env,frame_number,epoch_number, loss_function,optimizer,
+discount = 0.99,max_steps_per_epoch = 200,epsilon_min = 0.0002,
+explo_games = 5000,epsilon_games = 15000,render = False):
+
+    global model
+    global model_target
+    global replay_buffer
 
     number_of_action = env.action_space.n
     state = env.reset().repeat(2,axis=0).repeat(2,axis=1)
     
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-   
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
-=======
->>>>>>> Stashed changes
     episode_reward = 0
     
     done = False
 
     step_counter = 0
-    random_action_counter = 0
 
     #################################
     ## Change to modify the model training
@@ -100,7 +93,6 @@ epsilon_min = 0.0002,explo_games = 5000,epsilon_games = 15000,render = False):
         if epoch_number < explo_games or epsilon > random.random():
             # Take random action
             action = np.random.choice(number_of_action)
-            random_action_counter += 1
         else:
             # Predict action Q-values
             # From environment state
@@ -143,7 +135,7 @@ epsilon_min = 0.0002,explo_games = 5000,epsilon_games = 15000,render = False):
         # Update every fourth frame and once batch size is over 32
         if frame_number % update_Q_network == 0 and len(replay_buffer) > batch_size:
 
-            Q_update += 1
+            
             # Get indices of samples for replay buffers
             samples = random.sample(replay_buffer,batch_size)
 
@@ -196,7 +188,7 @@ epsilon_min = 0.0002,explo_games = 5000,epsilon_games = 15000,render = False):
 
         if frame_number % update_target_network == 0:
             
-            target_update += 1
+            
             # update the the target network with new weights
             model_target.set_weights(model.get_weights())
 
@@ -208,8 +200,14 @@ epsilon_min = 0.0002,explo_games = 5000,epsilon_games = 15000,render = False):
             del replay_buffer[:1000]
         
 
-    return episode_reward,frame_number,epsilon,random_action_counter,Q_update,target_update
+    return episode_reward,frame_number
+
+
 def main(args):
+
+    global model
+    global model_target
+    global replay_buffer
 
     nbr_epoch = args.epoch 
     shape = args.shape
@@ -245,10 +243,8 @@ def main(args):
 
 
     episode_reward_history = []
-    episode_epsilon_history = []
-    episode_random_action_history = []
+    
     # Using huber loss for stability
-    loss_function = losses.Huber()
 
     # number of epoch
     #nb_iterations = 50000
@@ -257,23 +253,21 @@ def main(args):
 
     frame_number = 0
 
-    Q_update = 0
-    target_update = 0
 
-    for i in tqdm(range(nbr_epoch)):
 
-        r_episode,frame_number,epsilon,random_action,Q_update,target_update = play_epoch(env=env,model=model,model_target=model_target,replay_buffer=replay_buffer,frame_number=frame_number,
-        epoch_number=i,Q_update=Q_update,loss_function=loss_function,optimizer=optimizer,target_update=target_update)
+    for i in range(nbr_epoch):
+
+        r_episode,frame_number = play_epoch(env=env,frame_number=frame_number,
+        epoch_number=i,loss_function=loss_function,optimizer=optimizer)
         episode_reward_history.append(r_episode)
-        episode_epsilon_history.append(epsilon)
-        episode_random_action_history.append(random_action)
+        
 
         if i % 1000 == 0:
 
             print("Epoch {}: Reward over the last 50 rounds {}".format(i,np.array(episode_reward_history[-50:]).mean()))
             model.save("./networks/10x_{}_{}k_smallQ".format(shape,nbr_epoch))
     
-    model.save("./networks/10x_{}_{}k_smallQ".format(shape,nbr_epoch))
+    model.save("./networks/final_10x_{}_{}k_smallQ".format(shape,nbr_epoch))
 
     df = pd.DataFrame(episode_reward_history)
     df.to_csv("training_reward/10x_{}_{}_smallQ.csv".format(shape,nbr_epoch))
