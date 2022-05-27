@@ -254,8 +254,8 @@ def main(args):
     frame_number = 0
 
 
-
-    for i in range(nbr_epoch):
+    print("start training")
+    for i in tqdm(range(nbr_epoch)):
 
         r_episode,frame_number = play_epoch(env=env,frame_number=frame_number,
         epoch_number=i,loss_function=loss_function,optimizer=optimizer)
@@ -265,12 +265,14 @@ def main(args):
         if i % 1000 == 0:
 
             print("Epoch {}: Reward over the last 50 rounds {}".format(i,np.array(episode_reward_history[-50:]).mean()))
-            model.save("./networks/10x_{}_{}k_smallQ".format(shape,nbr_epoch))
+            model.save("./networks/10x_{}_{}_smallQ".format(shape,nbr_epoch))
+            df = pd.DataFrame(episode_reward_history)
+            df.to_csv("./training_reward/10x_{}_{}_smallQ.csv".format(shape,nbr_epoch))
     
-    model.save("./networks/final_10x_{}_{}k_smallQ".format(shape,nbr_epoch))
+    model.save("./networks/final_10x_{}_{}_smallQ".format(shape,nbr_epoch))
 
     df = pd.DataFrame(episode_reward_history)
-    df.to_csv("training_reward/10x_{}_{}_smallQ.csv".format(shape,nbr_epoch))
+    df.to_csv("./training_reward/final_10x_{}_{}_smallQ.csv".format(shape,nbr_epoch))
 
 
 if __name__ == "__main__":
