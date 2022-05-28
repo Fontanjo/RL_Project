@@ -64,7 +64,7 @@ explo_games = 5000,epsilon_games = 15000,render = False):
     # How often to update the target network
     update_target_network = 10000
     # Replay buffer size
-    max_memory_length = 1000000
+    max_memory_length = 100000
 
     # Decay the epsilon only after each new games, rather than each frames of the games, probably not too relevant
 
