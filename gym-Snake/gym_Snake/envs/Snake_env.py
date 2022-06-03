@@ -614,11 +614,14 @@ class SnakeEnv(gym.Env):
                 # Set window icon
                 # Move working directory
                 try:
+                    # Save current working directory
+                    current_wd = os.getcwd()
                     abspath = os.path.abspath(__file__)
                     dname = os.path.dirname(abspath)
                     os.chdir(dname)
                     Icon = pygame.image.load('../../data/snake.png')
                     pygame.display.set_icon(Icon)
+                    os.chdir(current_wd)
                 except Exception as e:
                     pass
                 # Set screen size
