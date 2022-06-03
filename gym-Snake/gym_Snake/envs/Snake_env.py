@@ -697,7 +697,133 @@ class SnakeEnv(gym.Env):
             # Draw eyes
             gfxdraw.filled_circle(self.__surf, int(x_coord_head + (self.__tile_width / 2)),  int(y_coord_head + (self.__tile_height / 4)), int(self.__tile_width / 8), (0, 0, 0))
             gfxdraw.filled_circle(self.__surf, int(x_coord_head + (self.__tile_width / 2)),  int(y_coord_head + (self.__tile_height * 3 / 4)), int(self.__tile_width / 8), (0, 0, 0))
+
+
         # TODO draw body decorations
+        temp_h, temp_w = self.__head_pos
+        # Keep track of digestion
+        d = len(self.__snake_path)
+        # Add body
+        for i, direction in enumerate(self.__snake_path):
+            if direction == UP:
+                temp_h -= 1
+            elif direction == RIGHT:
+                temp_w += 1
+            elif direction == DOWN:
+                temp_h += 1
+            elif direction == LEFT:
+                temp_w -= 1
+            # Pacman effect
+            temp_w = (temp_w + self.__board_width) % self.__board_width
+            temp_h = (temp_h + self.__board_height) % self.__board_height
+
+            # Coordinates of the corner
+            x_coord = self.__tile_width * temp_w + self.__margin_left
+            y_coord = self.__tile_height * (self.__board_height - 1 - temp_h) + self.__margin_top
+
+            # print(self.__snake_path)
+            if direction == DOWN:
+                if i < len(self.__snake_path) - 1:
+                    if self.__snake_path[i+1] == DOWN:
+                        self.__draw_body_line(x_coord, y_coord, RIGHT)
+                        self.__draw_body_line(x_coord, y_coord, LEFT)
+                    elif self.__snake_path[i+1] == RIGHT:
+                        self.__draw_body_line(x_coord, y_coord, LEFT)
+                        self.__draw_body_line(x_coord, y_coord, DOWN)
+                        self.__draw_body_point(x_coord, y_coord, [RIGHT, UP])
+                    else: # LEFT
+                        self.__draw_body_line(x_coord, y_coord, RIGHT)
+                        self.__draw_body_line(x_coord, y_coord, DOWN)
+                        self.__draw_body_point(x_coord, y_coord, [LEFT, UP])
+                else: # If it's last tile
+                    self.__draw_body_line(x_coord, y_coord, RIGHT)
+                    self.__draw_body_line(x_coord, y_coord, LEFT)
+                    self.__draw_body_line(x_coord, y_coord, DOWN)
+            elif direction == RIGHT:
+                if i < len(self.__snake_path) - 1:
+                    if self.__snake_path[i+1] == RIGHT:
+                        self.__draw_body_line(x_coord, y_coord, UP)
+                        self.__draw_body_line(x_coord, y_coord, DOWN)
+                    elif self.__snake_path[i+1] == UP:
+                        self.__draw_body_line(x_coord, y_coord, RIGHT)
+                        self.__draw_body_line(x_coord, y_coord, DOWN)
+                        self.__draw_body_point(x_coord, y_coord, [LEFT, UP])
+                    else: # DOWN
+                        self.__draw_body_line(x_coord, y_coord, RIGHT)
+                        self.__draw_body_line(x_coord, y_coord, UP)
+                        self.__draw_body_point(x_coord, y_coord, [LEFT, DOWN])
+                else: # If it's last tile
+                    self.__draw_body_line(x_coord, y_coord, UP)
+                    self.__draw_body_line(x_coord, y_coord, RIGHT)
+                    self.__draw_body_line(x_coord, y_coord, DOWN)
+            elif direction == UP:
+                if i < len(self.__snake_path) - 1:
+                    if self.__snake_path[i+1] == UP:
+                        self.__draw_body_line(x_coord, y_coord, RIGHT)
+                        self.__draw_body_line(x_coord, y_coord, LEFT)
+                    elif self.__snake_path[i+1] == RIGHT:
+                        self.__draw_body_line(x_coord, y_coord, LEFT)
+                        self.__draw_body_line(x_coord, y_coord, UP)
+                        self.__draw_body_point(x_coord, y_coord, [DOWN, RIGHT])
+                    else: # LEFT
+                        self.__draw_body_line(x_coord, y_coord, RIGHT)
+                        self.__draw_body_line(x_coord, y_coord, UP)
+                        self.__draw_body_point(x_coord, y_coord, [LEFT, DOWN])
+                else: # If it's last tile
+                    self.__draw_body_line(x_coord, y_coord, UP)
+                    self.__draw_body_line(x_coord, y_coord, RIGHT)
+                    self.__draw_body_line(x_coord, y_coord, LEFT)
+            elif direction == LEFT:
+                if i < len(self.__snake_path) - 1:
+                    if self.__snake_path[i+1] == LEFT:
+                        self.__draw_body_line(x_coord, y_coord, UP)
+                        self.__draw_body_line(x_coord, y_coord, DOWN)
+                    elif self.__snake_path[i+1] == UP:
+                        self.__draw_body_line(x_coord, y_coord, LEFT)
+                        self.__draw_body_line(x_coord, y_coord, DOWN)
+                        self.__draw_body_point(x_coord, y_coord, [RIGHT, UP])
+                    else: # DOWN
+                        self.__draw_body_line(x_coord, y_coord, LEFT)
+                        self.__draw_body_line(x_coord, y_coord, UP)
+                        self.__draw_body_point(x_coord, y_coord, [RIGHT, DOWN])
+                else: # If it's last tile
+                    self.__draw_body_line(x_coord, y_coord, UP)
+                    self.__draw_body_line(x_coord, y_coord, DOWN)
+                    self.__draw_body_line(x_coord, y_coord, LEFT)
+
+            # gfxdraw.box(self.__surf, pygame.Rect(x_coord, y_coord, self.__tile_width, self.__tile_height), (0, 0, 240))
+            # gfxdraw.box(self.__surf, pygame.Rect(temp_w * self.__tile_width, temp_x * self.__tile_height, self.__tile_width/10, self.__tile_height/10), (0, 0, 255))
+
+
+
+    def __draw_body_line(self, x, y, edge):
+        if edge == RIGHT:
+            gfxdraw.box(self.__surf, pygame.Rect(x + self.__tile_width, y, -self.__tile_width/5, self.__tile_height), self.__colors[HEAD_UP])
+        elif edge == DOWN:
+            gfxdraw.box(self.__surf, pygame.Rect(x, y, self.__tile_width, self.__tile_height / 5), self.__colors[HEAD_UP])
+        elif edge == LEFT:
+            gfxdraw.box(self.__surf, pygame.Rect(x, y, self.__tile_width / 5, self.__tile_height), self.__colors[HEAD_UP])
+        elif edge == UP:
+            gfxdraw.box(self.__surf, pygame.Rect(x, y + self.__tile_height, self.__tile_width, -self.__tile_height / 5), self.__colors[HEAD_UP])
+        else:
+            print('Invalid edge')
+
+
+    def __draw_body_point(self, x, y, edges):
+        if RIGHT in edges and UP in edges:
+            # print('top_right_point')
+            gfxdraw.box(self.__surf, pygame.Rect(x + self.__tile_width, y + self.__tile_height, -self.__tile_width / 5, -self.__tile_height / 5), self.__colors[HEAD_UP])
+        elif RIGHT in edges and DOWN in edges:
+            # print('bottom_right_point')
+            gfxdraw.box(self.__surf, pygame.Rect(x + self.__tile_width, y, -self.__tile_width / 5, self.__tile_height / 5), self.__colors[HEAD_UP])
+        elif LEFT in edges and UP in edges:
+            # print('top_left_point')
+            gfxdraw.box(self.__surf, pygame.Rect(x, y + self.__tile_height, self.__tile_width / 5, -self.__tile_height / 5), self.__colors[HEAD_UP])
+        elif LEFT in edges and DOWN in edges:
+            # print('bottom_left_point')
+            gfxdraw.box(self.__surf, pygame.Rect(x, y, self.__tile_width / 5, self.__tile_height / 5), self.__colors[HEAD_UP])
+        else:
+            print('Invalid edge')
 
 
     def __draw_info_table(self):
