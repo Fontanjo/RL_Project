@@ -3,7 +3,7 @@ README file for Snake gym environment!
 
 
 
-[**Prerequisites**](#prerequisites) | [**Build**](#build) | [**Examples**](#execution-examples) | [**Arguments**](#arguments)
+[**Prerequisites**](#prerequisites) | [**Build**](#build) | [**Examples**](#execution-examples) | [**Arguments**](#arguments) | [**State representation**](#state-representation)
 
 ___
 
@@ -39,7 +39,7 @@ ___
 $ env = gym.make('Snake-v0')
 ```
 
-2. Generate an environment of size 10x10 without border (and pacman-effect). Play with keybord arrows (or WASD)
+2. Generate an environment of size 10x10 without border (and pacman-effect). Play with keyboard arrows (or WASD)
 ```
 $ env = gym.make('Snake-v0', player='human', width=10, height=10, solid_border=False)
 ```
@@ -130,54 +130,65 @@ render arguments
             <td rowspan=2>player</td>
             <td rowspan=2>'computer'</td>
             <td>'computer'</td>
-            <td></td>
+            <td>Normal mode. Play by calling the 'step' method and passing an action as argument</td>
         </tr>
         <tr>
             <td>'human'</td>
-            <td></td>
+            <td>Human mode. Play with the keyboard while the game is rendered on a window</td>
         </tr>
         <tr>
             <td rowspan=2>state_mode</td>
             <td rowspan=2>'states'</td>
             <td>'states'</td>
-            <td></td>
+            <td>The observation space consists in a value between 0 and 1023. For a more detailed explanation, see <a #state-representation>State representation</a></td>
         </tr>
         <tr>
             <td>'matrix'</td>
-            <td></td>
+            <td>The observation returned by the step() and the reset() method is simply the entire board, as a 2D matrix</td>
         </tr>
         <tr>
             <td rowspan=3>reward_mode</td>
             <td rowspan=3>'normal'</td>
             <td>'normal'</td>
-            <td></td>
+            <td>The rewards are given only when the snake eats a target, or when it dies</td>
         </tr>
         <tr>
             <td>'extended'</td>
-            <td></td>
+            <td>In addition to the normal rewards, a positive reward is given to the snake for each step reducing its (l1) distance from the target, and a negative reward for each step increasing it. It is also possible to give an additional reward for each step in which the snake does not die</td>
         </tr>
         <tr>
             <td>'adaptive'</td>
-            <td></td>
+            <td>Same as 'extended', but the rewards for approaching/walking away from the target are decreased the longer the snake is. The intuition behind this is that when the snake is longer, going straight to the target becomes less and less important, and rather more focus should be put in surviving</td>
         </tr>
         <tr>
             <td>rewards</td>
             <td>None</td>
             <td>None or dictionary</td>
-            <td></td>
+            <td>It is possible to override the default value of the rewards by passing a dictionary. The keys in this dictionary are all optional, and are: "REWARD_TARGET", "REWARD_COLLISION", "REWARD_TOWARD", "REWARD_AWAY", and "REWARD_SURVIVED"</td>
         </tr>
     </tbody>
 </table>
 
 
+## State representation
 
-# TODO
+To use the environment with classical RL algorithms (e.g. Q-Learning or SARSA), instead of the entire matrix it is possible to receive only a value between 0 and 1023 as observation. This value encodes the local information around the snake head, and is the decimal representation of a binary array defined as following:
+
+0-2 bits: target position relative to the head (8 possibilities)  
+3-9 bits: obstacle in front or not, obstacle in front-right or not, obstacle on the right or not, ... (obstacle behind always true, so ignore)
+
+The step() method returns also a dictionary of information, often called 'info'. It is possible to visualize the position of the target and the wall obstacle around the head as 2D matrices from this dictionary, using
+
+```python
+info["target_pos"]
+info["walls"]
+```
+
+
+# TODO - Future works
 
 - [ ] Add images of the shapes
 - [ ] Add new shapes
-  - [x] Shuriken
-  - [x] Double
-  - [x] Custom
   - [ ] Maze
   - [ ] With random walls placed
   - [ ] ...
