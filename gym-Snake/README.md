@@ -140,7 +140,7 @@ render arguments
             <td rowspan=2>state_mode</td>
             <td rowspan=2>'states'</td>
             <td>'states'</td>
-            <td>The observation space consists in a value between 0 and 1023. For a more detailed explanation, see <a #state-representation>State representation</a></td>
+            <td>The observation space consists in a value between 0 and 1023. For a more detailed explanation, see [**State representation**](#state-representation)</a></td>
         </tr>
         <tr>
             <td>'matrix'</td>
