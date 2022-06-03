@@ -57,16 +57,7 @@ ___
 
 ## Arguments
 
-
-init / reset arguments:
-
-name     default     possible values          requisites  
-width=10, height=10, solid_border=True, shape='Normal', custom_board=None, player='computer', state_mode='states', reward_mode='normal', rewards=None
-
-render arguments
-- mode       'human'/'print'
-
-
+Arguments for the initialization/reset method
 
 <table>
     <thead>
@@ -140,7 +131,7 @@ render arguments
             <td rowspan=2>state_mode</td>
             <td rowspan=2>'states'</td>
             <td>'states'</td>
-            <td>The observation space consists in a value between 0 and 1023. For a more detailed explanation, see [**State representation**](#state-representation)</a></td>
+            <td>The observation space consists in a value between 0 and 1023. For a more detailed explanation, see [**State representation**](#state-representation)</td>
         </tr>
         <tr>
             <td>'matrix'</td>
