@@ -131,7 +131,7 @@ Arguments for the initialization/reset method
             <td rowspan=2>state_mode</td>
             <td rowspan=2>'states'</td>
             <td>'states'</td>
-            <td>The observation space consists in a value between 0 and 1023. For a more detailed explanation, see [**State representation**](#state-representation)</td>
+            <td>The observation space consists in a value between 0 and 1023. For a more detailed explanation, see the **State representation** section</td>
         </tr>
         <tr>
             <td>'matrix'</td>
