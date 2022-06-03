@@ -621,6 +621,7 @@ class SnakeEnv(gym.Env):
                     os.chdir(dname)
                     Icon = pygame.image.load('../../data/snake.png')
                     pygame.display.set_icon(Icon)
+                    # Restore previous working directory
                     os.chdir(current_wd)
                 except Exception as e:
                     pass

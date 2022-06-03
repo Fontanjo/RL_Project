@@ -39,7 +39,20 @@ ___
 $ env = gym.make('Snake-v0')
 ```
 
-2.
+2. Generate an environment of size 10x10 without border (and pacman-effect). Play with keybord arrows (or WASD)
+```
+$ env = gym.make('Snake-v0', player='human', width=10, height=10, solid_border=False)
+```
+
+3. Generate an environment with the 'Shuriken' shape. Return the entire board (represented as a matrix) as observation
+```
+$ env = gym.make('Snake-v0', state_mode='matrix', shape='Shuriken')
+```
+
+4. Reset and existing environment maintaining all the parameters, but set the reward mode to 'extended'
+```
+$ env.reset(reward_mode="extended")
+```
 ___
 
 ## Arguments
@@ -55,6 +68,73 @@ render arguments
 
 
 
+<table>
+    <thead>
+        <tr>
+            <th>Argument name</th>
+            <th>Default value</th>
+            <th>Possible values</th>
+            <th>Description</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>width</td>
+            <td>10</td>
+            <td>positive integer value</td>
+            <td>The with of the board. Specific shapes have a minimal with</td>
+        </tr>
+        <tr>
+            <td>height</td>
+            <td>10</td>
+            <td>positive integer value</td>
+            <td>The height of the board. Specific shapes have a minimal height</td>
+        </tr>
+        <tr>
+            <td>seed</td>
+            <td>None</td>
+            <td>integer between 0 and 2**32 - 1</td>
+            <td>The with of the board. Specific shapes have a minimal with</td>
+        </tr>
+        <tr>
+            <td>solid_border</td>
+            <td>True</td>
+            <td>True or False</td>
+            <td>Whether or not the border of the board are walls</td>
+        </tr>
+        <tr>
+          <td rowspan=3>shape</td>
+          <td rowspan=3>'Normal'</td>
+          <td>bla</td>
+          <td>bla</td>
+        </tr>
+        <tr>
+          <td>bla</td>
+          <td>bla</td>
+        </tr>
+        <tr>
+          <td>bla</td>
+          <td>bla</td>
+        </tr>
+        <tr>
+            <td rowspan=4>L1 Name</td>
+            <td rowspan=2>L2 Name A</td>
+            <td>L3 Name A</td>
+        </tr>
+        <tr>
+            <td>L3 Name B</td>
+        </tr>
+        <tr>
+            <td rowspan=2>L2 Name B</td>
+            <td>L3 Name C</td>
+        </tr>
+        <tr>
+            <td>L3 Name D</td>
+        </tr>
+    </tbody>
+</table>
+
+
 
 # TODO
 
@@ -63,21 +143,8 @@ render arguments
   - [x] Double
   - [x] Custom
   - [ ] Maze
-  - [ ] Random
+  - [ ] With random walls placed
   - [ ] ...
 - [ ] Improve initial placing of snake
-- [ ] Improve graphic (draw snake border (!! RL agent can not see this! But probably not important))
-- [ ] Create decent README
-  - [ ] Describe requisite of custom board
-  - [ ] Describe arguments (e.g. possible boards)
-  - [ ] Show stats (e.g. points/length)
+- [ ] Set an option to change the initial snake length
 - [ ] Ev. add max moves to get target
-
-
-# Done
-
-- [x] Add pacman effect  
-  Sometime already working :D, sometime NOT! (especially in checking new position)  
-  I think it works if you first go left/up, because array index with negative number is possible (but not with number > max index)
-- [x] Create basic env
-- [x] Render in human mode
