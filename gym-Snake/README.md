@@ -94,7 +94,7 @@ render arguments
             <td>seed</td>
             <td>None</td>
             <td>integer between 0 and 2**32 - 1</td>
-            <td>The with of the board. Specific shapes have a minimal with</td>
+            <td>A seed for the random generator, in order to make experiments reproducibles</td>
         </tr>
         <tr>
             <td>solid_border</td>
@@ -103,33 +103,68 @@ render arguments
             <td>Whether or not the border of the board are walls</td>
         </tr>
         <tr>
-          <td rowspan=3>shape</td>
-          <td rowspan=3>'Normal'</td>
-          <td>bla</td>
-          <td>bla</td>
+          <td rowspan=4>shape</td>
+          <td rowspan=4>'Normal'</td>
+          <td>'Normal'</td>
+          <td>Classical rectangular shape, with possibly walls at the borders</td>
         </tr>
         <tr>
-          <td>bla</td>
-          <td>bla</td>
+          <td>'Shuriken'</td>
+          <td>A shape that resembles the Japanese "throwing stars"</td>
         </tr>
         <tr>
-          <td>bla</td>
-          <td>bla</td>
+          <td>'Double_v'</td>
+          <td>A normal board with a line of walls separating it horizontaly. Only a small pass is available to traverse from top half to bottom half</td>
         </tr>
         <tr>
-            <td rowspan=4>L1 Name</td>
-            <td rowspan=2>L2 Name A</td>
-            <td>L3 Name A</td>
+          <td>'Double_v'</td>
+          <td>Same as 'Double_h', but the separation is vertical</td>
         </tr>
         <tr>
-            <td>L3 Name B</td>
+            <td>custom_board</td>
+            <td>None</td>
+            <td>None or 2D matrix</td>
+            <td>A matrix with the shape of the desired environment. The value 0 represents an empty tile, while a 1 represents a wall. If not None, the 'shape' parameter is overwritten</td>
         </tr>
         <tr>
-            <td rowspan=2>L2 Name B</td>
-            <td>L3 Name C</td>
+            <td rowspan=2>player</td>
+            <td rowspan=2>'computer'</td>
+            <td>'computer'</td>
+            <td></td>
         </tr>
         <tr>
-            <td>L3 Name D</td>
+            <td>'human'</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td rowspan=2>state_mode</td>
+            <td rowspan=2>'states'</td>
+            <td>'states'</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>'matrix'</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td rowspan=3>reward_mode</td>
+            <td rowspan=3>'normal'</td>
+            <td>'normal'</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>'extended'</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>'adaptive'</td>
+            <td></td>
+        </tr>
+        <tr>
+            <td>rewards</td>
+            <td>None</td>
+            <td>None or dictionary</td>
+            <td></td>
         </tr>
     </tbody>
 </table>
@@ -138,6 +173,7 @@ render arguments
 
 # TODO
 
+- [ ] Add images of the shapes
 - [ ] Add new shapes
   - [x] Shuriken
   - [x] Double
