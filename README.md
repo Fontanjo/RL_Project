@@ -21,12 +21,3 @@ Deep QL, same action encoding as our
 
 [https://www3.hs-albsig.de/wordpress/point2pointmotion/2020/10/09/deep-reinforcement-learning-with-the-snake-game/](https://www3.hs-albsig.de/wordpress/point2pointmotion/2020/10/09/deep-reinforcement-learning-with-the-snake-game/)  
 Based on the code that solved the atari games. Good that it uses cnn. However do not obtain incredible results
-
-
-# Todo
-- [ ] Literature of similar works
-- [ ] Algorithm
-- [ ] Study training on different environments
-- [ ] Report
-- [ ] Create decent readme
-- [ ] Todos in gym-Snake folder
