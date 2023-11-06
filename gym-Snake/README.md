@@ -21,7 +21,7 @@ ___
 From main folder, register the new environment with:
 
 ```
-$ pip install -e gym-snake
+$ pip install -e gym-Snake
 ```
 
 Import the new environment in a python script using
